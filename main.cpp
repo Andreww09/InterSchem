@@ -2,7 +2,7 @@
 #include <fstream>
 #include <graphics.h>
 #include <cstring>
-#include <list>
+#include <vector>
 using namespace std;
 int color=COLOR(102,255,178),nod_color=YELLOW,fundal=WHITE,option_color=COLOR(128,128,255),text_color=YELLOW;
 int nr_blocuri=6,bloc_nou=-1,selectat=-1,raza=10;
@@ -13,7 +13,7 @@ struct blocuri
   int width=100,height=50;
   char var1[5]="?",op[5]="+",var2[5]="?";
   char text[101];
-  blocuri(int a,int b,int c,int d,char s1[51]="")
+  blocuri(int a=0,int b=0,int c=0,int d=0,char s1[51]="")
   {tip=a;nr=b;x=c;y=d;char s[51];
    strcpy(text,s1);
    if(nr==1)
@@ -22,11 +22,11 @@ struct blocuri
      if(tip==2 || tip==3) {strcpy(s,var1);s[strlen(s)]='\0';}
      if(tip>3) {strcpy(s,var1);strcat(s,"  ");strcat(s,op);strcat(s,"  ");strcat(s,var2);}
      if(tip>=2) strcpy(text,s);
- 
+
    }
   }
 };
-list <blocuri> a[1001];
+blocuri a[1001];
 
 void deseneaza_start(int x, int y, char s[51]="START")
 { int width=100,height=50,lung_text=textwidth(s);
@@ -185,7 +185,7 @@ bool apartine_zona(int x, int y)
 
 void verifica_butoane(int x, int y)
 { for(int i=0;i<=5;i++)
-      if(verifica_bloc(a[i].front().tip,x,y,a[i].front().x,a[i].front().y)) bloc_nou=a[i].front().tip;
+      if(verifica_bloc(a[i].tip,x,y,a[i].x,a[i].y)) bloc_nou=a[i].tip;
 
 
 }
@@ -225,14 +225,14 @@ void afiseaza_optiuni(int x, int y)
 void init()
 { int y=710,x=50,width=100,nr=1;
   setbkcolor(fundal);clearviewport();
-  a[0].push_front({0,0,50,710,"START"});
-  a[1].push_front({1,0,200,710,"STOP"});
-  a[2].push_front({2,0,350,710,"INTRARE"});
-  a[3].push_front({3,0,500,710,"IESIRE"});
-  a[4].push_front({4,0,650,710,"DECIZIE"});
-  a[5].push_front({5,0,800,710,"CALCUL"});
+  a[0]={0,0,50,710,"START"};
+  a[1]={1,0,200,710,"STOP"};
+  a[2]={2,0,350,710,"INTRARE"};
+  a[3]={3,0,500,710,"IESIRE"};
+  a[4]={4,0,650,710,"DECIZIE"};
+  a[5]={5,0,800,710,"CALCUL"};
   for(int i=0;i<=5;i++)
-      desenare_bloc(a[i].front().x,a[i].front().y,a[i].front().tip,a[i].front().text);
+      desenare_bloc(a[i].x,a[i].y,a[i].tip,a[i].text);
 }
 
 void deseneaza_schema()
@@ -241,12 +241,12 @@ void deseneaza_schema()
   setfillstyle(SOLID_FILL,WHITE);
   floodfill(500,100,BLUE);
   for(int i=6;i<nr_blocuri;i++)
-       desenare_bloc(a[i].front().x,a[i].front().y,a[i].front().tip,a[i].front().text);
+       desenare_bloc(a[i].x,a[i].y,a[i].tip,a[i].text);
 }
 
 int verifica_toate_blocurile(int x, int y)
 { for(int i=6;i<nr_blocuri;i++)
-      if(verifica_bloc(a[i].front().tip,x,y,a[i].front().x,a[i].front().y)) return i;
+      if(verifica_bloc(a[i].tip,x,y,a[i].x,a[i].y)) return i;
   return -1;
 }
 
@@ -260,7 +260,7 @@ int main()
    if(optiuni && ismouseclick(WM_LBUTTONDOWN)) /// click pe optiunile muta/sterge
         {int x=mousex(),y=mousey();
          clearmouseclick(WM_LBUTTONDOWN);
-         verifica_optiuni(selectat,x,y,a[selectat].front().x+a[selectat].front().width,a[selectat].front().y);
+         verifica_optiuni(selectat,x,y,a[selectat].x+a[selectat].width,a[selectat].y);
          event=1;
          selectat=-1;
          optiuni=0;
@@ -268,7 +268,7 @@ int main()
         }
    if(selectat>5 && ismouseclick(WM_RBUTTONDOWN)) /// click dreapta pe un bloc
         {int x=mousex(),y=mousey();
-         afiseaza_optiuni(a[selectat].front().x+a[selectat].front().width,a[selectat].front().y);
+         afiseaza_optiuni(a[selectat].x+a[selectat].width,a[selectat].y);
          clearmouseclick(WM_RBUTTONDOWN);
          event=0;
          optiuni=1;
@@ -281,9 +281,9 @@ int main()
         }
    if(bloc_nou!=-1)  /// mutarea unui bloc
         {int x=mousex(),y=mousey();
-         x-=a[bloc_nou].front().width/2;
+         x-=a[bloc_nou].width/2;
          if(apartine_zona(x,y))
-            {desenare_bloc(x,y,a[bloc_nou].front().tip,a[bloc_nou].front().text);
+            {desenare_bloc(x,y,a[bloc_nou].tip,a[bloc_nou].text);
              event=1;
             }
         }
@@ -292,11 +292,11 @@ int main()
          clearmouseclick(WM_LBUTTONDOWN);
          event=1;
          if(bloc_nou!=-1)
-            { x-=a[bloc_nou].front().width/2;
+            { x-=a[bloc_nou].width/2;
               if(apartine_zona(x,y))
                    {if(bloc_nou<=5)
-                        a[nr_blocuri++].push_front({bloc_nou,1,x,y});
-                   else a[bloc_nou].front().x=x,a[bloc_nou].front().y=y;
+                        a[nr_blocuri++]={bloc_nou,1,x,y};
+                   else a[bloc_nou].x=x,a[bloc_nou].y=y;
                    }
               bloc_nou=-1;
             }
