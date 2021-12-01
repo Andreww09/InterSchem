@@ -7,12 +7,15 @@ using namespace std;
 int color=COLOR(102,255,178),nod_color=YELLOW,fundal=WHITE,option_color=COLOR(128,128,255),text_color=YELLOW;
 int nr_blocuri=6,bloc_nou=-1,selectat=-1,raza=10;
 int colt_x=0,colt_y=50,lungime=1200,inaltime=600; /// zona unde pot fi puse blocuri
+bool event=1,optiuni=0;
+
 struct blocuri
 { int tip,nr;
   int x,y;
   int width=100,height=50;
   char var1[5]="?",op[5]="+",var2[5]="?";
   char text[101];
+  int st=-1,dr=-1;
   blocuri(int a=0,int b=0,int c=0,int d=0,char s1[51]="")
   {tip=a;nr=b;x=c;y=d;char s[51];
    strcpy(text,s1);
@@ -235,11 +238,39 @@ void init()
       desenare_bloc(a[i].x,a[i].y,a[i].tip,a[i].text);
 }
 
+bool apartine_nod()
+{
+
+}
+
+bool verifica_toate_nodurile()
+{ for(int i=6;i<nr_blocuri;i++)
+     {
+
+     }
+
+}
+
+void trasare_legatura(int x, int y, int tip, int i)
+{ /** x, y - pozitia nodului,  tip poate de ajuta la ceva
+      (a[i].x+a[i].width/2, a[i].y)  sunt coordonatele nodului destinatie
+    */
+
+}
+
+void deseneaza_legaturi()
+{for(int i=6;i<nr_blocuri;i++)
+       {trasare_legatura(a[i].x,a[i].y+a[i].height,a[i].tip,a[i].st);
+        trasare_legatura(a[i].x+a[i].width,a[i].y+a[i].height,a[i].tip,a[i].dr);
+       }
+}
+
 void deseneaza_schema()
 { setcolor(BLUE);
   rectangle(0,colt_y,lungime,colt_y+inaltime);
   setfillstyle(SOLID_FILL,WHITE);
   floodfill(500,100,BLUE);
+  deseneaza_legaturi();
   for(int i=6;i<nr_blocuri;i++)
        desenare_bloc(a[i].x,a[i].y,a[i].tip,a[i].text);
 }
@@ -250,59 +281,74 @@ int verifica_toate_blocurile(int x, int y)
   return -1;
 }
 
+void click_optiuni() /// click pe optiunile muta/sterge
+{int x=mousex(),y=mousey();
+ clearmouseclick(WM_LBUTTONDOWN);
+ verifica_optiuni(selectat,x,y,a[selectat].x+a[selectat].width,a[selectat].y);
+ event=1;
+ selectat=-1;
+ optiuni=0;
+}
+
+void click_dreapta_pe_bloc()
+{int x=mousex(),y=mousey();
+ afiseaza_optiuni(a[selectat].x+a[selectat].width,a[selectat].y);
+ clearmouseclick(WM_RBUTTONDOWN);
+ event=0;
+ optiuni=1;
+}
+
+void anuleaza() /// click dreapta cand se muta un bloc pentru a anula actiunea
+{clearmouseclick(WM_RBUTTONDOWN);
+ bloc_nou=-1;
+ event=1;
+}
+
+void mutare()
+{int x=mousex(),y=mousey();
+ x-=a[bloc_nou].width/2;
+ if(apartine_zona(x,y))
+    {desenare_bloc(x,y,a[bloc_nou].tip,a[bloc_nou].text);
+     event=1;
+    }
+}
+
+void click_stanga() /// click stanga pentru a plasa blocuri si pentru a adauga blocuri noi
+{int x=mousex(),y=mousey();
+ clearmouseclick(WM_LBUTTONDOWN);
+ event=1;
+ if(bloc_nou!=-1)
+    { x-=a[bloc_nou].width/2;
+      if(apartine_zona(x,y))
+            {if(bloc_nou<=5)
+                {a[nr_blocuri++]={bloc_nou,1,x,y};
+                 if(nr_blocuri>6) a[nr_blocuri-1].st=nr_blocuri-1;
+                }
+             else a[bloc_nou].x=x,a[bloc_nou].y=y;
+            }
+      bloc_nou=-1;
+    }
+ verifica_butoane(x,y);
+ selectat=verifica_toate_blocurile(x,y);
+ ///nod_selectat=verifica_toate_nodurile();
+}
+
 int main()
 { initwindow(getmaxwidth(),getmaxheight()-25); /// 1530 810
   init();
-  bool event=1,optiuni=0;
   while(1)
   {delay(100);
    if(event) deseneaza_schema(),event=0;
-   if(optiuni && ismouseclick(WM_LBUTTONDOWN)) /// click pe optiunile muta/sterge
-        {int x=mousex(),y=mousey();
-         clearmouseclick(WM_LBUTTONDOWN);
-         verifica_optiuni(selectat,x,y,a[selectat].x+a[selectat].width,a[selectat].y);
-         event=1;
-         selectat=-1;
-         optiuni=0;
-         continue ;
-        }
-   if(selectat>5 && ismouseclick(WM_RBUTTONDOWN)) /// click dreapta pe un bloc
-        {int x=mousex(),y=mousey();
-         afiseaza_optiuni(a[selectat].x+a[selectat].width,a[selectat].y);
-         clearmouseclick(WM_RBUTTONDOWN);
-         event=0;
-         optiuni=1;
-         continue ;
-        }
-   if(bloc_nou!=-1 && ismouseclick(WM_RBUTTONDOWN)) /// click dreapta cand se muta un bloc pentru a anula actiunea
-        {clearmouseclick(WM_RBUTTONDOWN);
-         bloc_nou=-1;
-         event=1;
-        }
-   if(bloc_nou!=-1)  /// mutarea unui bloc
-        {int x=mousex(),y=mousey();
-         x-=a[bloc_nou].width/2;
-         if(apartine_zona(x,y))
-            {desenare_bloc(x,y,a[bloc_nou].tip,a[bloc_nou].text);
-             event=1;
-            }
-        }
-   if(ismouseclick(WM_LBUTTONDOWN)) /// click stanga pentru a plasa blocuri si pentru a adauga blocuri noi
-        {int x=mousex(),y=mousey();
-         clearmouseclick(WM_LBUTTONDOWN);
-         event=1;
-         if(bloc_nou!=-1)
-            { x-=a[bloc_nou].width/2;
-              if(apartine_zona(x,y))
-                   {if(bloc_nou<=5)
-                        a[nr_blocuri++]={bloc_nou,1,x,y};
-                   else a[bloc_nou].x=x,a[bloc_nou].y=y;
-                   }
-              bloc_nou=-1;
-            }
-         verifica_butoane(x,y);
-         selectat=verifica_toate_blocurile(x,y);
-         }
+
+   if(optiuni && ismouseclick(WM_LBUTTONDOWN)) {click_optiuni(); continue ;}
+
+   if(selectat>5 && ismouseclick(WM_RBUTTONDOWN)) {click_dreapta_pe_bloc(); continue ;}
+
+   if(bloc_nou!=-1 && ismouseclick(WM_RBUTTONDOWN))  anuleaza();
+
+   if(bloc_nou!=-1) mutare();
+
+   if(ismouseclick(WM_LBUTTONDOWN)) click_stanga();
 
   }
 getch();
