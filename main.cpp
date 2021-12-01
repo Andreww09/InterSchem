@@ -260,8 +260,8 @@ void trasare_legatura(int x, int y, int tip, int i)
 
 void deseneaza_legaturi()
 {for(int i=6;i<nr_blocuri;i++)
-       {trasare_legatura(a[i].x,a[i].y+a[i].height,a[i].tip,a[i].st);
-        trasare_legatura(a[i].x+a[i].width,a[i].y+a[i].height,a[i].tip,a[i].dr);
+       {if(a[i].st!=-1)  trasare_legatura(a[i].x,a[i].y+a[i].height,a[i].tip,a[i].st);
+        if(a[i].dr!=-1)  trasare_legatura(a[i].x+a[i].width,a[i].y+a[i].height,a[i].tip,a[i].dr);
        }
 }
 
