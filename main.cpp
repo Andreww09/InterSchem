@@ -1,13 +1,52 @@
 #include <iostream>
-#include <fstream>
-#include <graphics.h>
-#include <cstring>
-#include <vector>
+#include <stdlib.h>
+#include <winbgim.h>
+#include <string>
+
+#define MARGINE_SUPERIOARA 0.20
+#define DISTANTA_INTRE_COMPONENTE 0.05
+#define INALTIME_ZONA_MENIU 0.60
+#define LUNGIME_ZONA_MENIU 0.2
+#define MARGINE_STANGA 0.40
+#define FONT_STYLE DEFAULT_FONT
+#define FONT_SIZE 0
+/// zona unde pot fi puse blocurile
+#define colt_x 0
+#define colt_y 50
+#define lungime 1200
+#define inaltime 600
+/// culorile folosite
+#define color COLOR(102,255,178)
+#define nod_color YELLOW
+#define fundal WHITE
+#define option_color COLOR(128,128,255)
+#define text_color RED
+
 using namespace std;
-int color=COLOR(102,255,178),nod_color=YELLOW,fundal=WHITE,option_color=COLOR(128,128,255),text_color=YELLOW;
+
+int ecrane[11]; // Numarul de ecrane al programului
+int nrOptiuni;  //Cate optiuni are meniul ( poate fi modificat prin apelarea de un numar dorit de ori a functiei creeazaOptiune )
+int ecranCurent; //Ecranul deschis in acest moment
+
 int nr_blocuri=6,bloc_nou=-1,selectat=-1,raza=10;
-int colt_x=0,colt_y=50,lungime=1200,inaltime=600; /// zona unde pot fi puse blocuri
-bool event=1,options=0;
+bool event=1,options=0,ecran_schimbat=1;
+int ok = 1;
+
+struct dreptunghi
+{
+    int top,left,right,bottom;
+    int midx,midy;
+};
+
+//Structura unei optiuni din meniu
+struct optiune
+{
+    dreptunghi drept;
+    int heightText, widthText;
+    int culoare;
+
+} optiuni[11];
+
 
 struct blocuri
 { int tip,nr;
@@ -226,7 +265,8 @@ void afiseaza_optiuni(int x, int y)
 }
 
 void init()
-{ int width=100,nr=1;
+{ int y=710,x=50,width=100,nr=1;
+  nr_blocuri=6;
   setbkcolor(fundal);clearviewport();
   a[0]={0,0,50,710,"START"};
   a[1]={1,0,200,710,"STOP"};
@@ -255,6 +295,8 @@ void trasare_legatura(int x, int y, int tip, int i)
 { /** x, y - pozitia nodului,  tip poate de ajuta la ceva
       (a[i].x+a[i].width/2, a[i].y)  sunt coordonatele nodului destinatie
     */
+
+    line(1,1,100,100);
 
 }
 
@@ -322,7 +364,7 @@ void click_stanga() /// click stanga pentru a plasa blocuri si pentru a adauga b
       if(apartine_zona(x,y))
             {if(bloc_nou<=5)
                 {a[nr_blocuri++]={bloc_nou,1,x,y};
-                 ///if(nr_blocuri>6) a[nr_blocuri-1].st=nr_blocuri-1;
+                 if(nr_blocuri>6) a[nr_blocuri-1].st=nr_blocuri-1;
                 }
              else a[bloc_nou].x=x,a[bloc_nou].y=y;
             }
@@ -333,24 +375,190 @@ void click_stanga() /// click stanga pentru a plasa blocuri si pentru a adauga b
  ///nod_selectat=verifica_toate_nodurile();
 }
 
-int main()
-{ initwindow(getmaxwidth(),getmaxheight()-25); /// 1530 810
-  init();
-  while(1)
-  {delay(100);
+//Determina coordonatele unei optiuni in functie de marimile ecranului si proportiile alese (constantele de la inceputul programului)
+dreptunghi coordonateOptiune(const int& width,const int& height, const int& componenta,const int& nrComponente)
+{
+    //Setam layoutul ecranului
+    int heightSuperior        = height * MARGINE_SUPERIOARA;
+    int heightIntreComponente = height * DISTANTA_INTRE_COMPONENTE;
+    int heightComponenta      = (height * INALTIME_ZONA_MENIU - nrComponente * heightIntreComponente) / nrComponente;
+    int widthStanga           = width * MARGINE_STANGA;
+    int widthComponenta       = width * LUNGIME_ZONA_MENIU;
+
+    //Calculam coordonatele dreptunghiului
+    dreptunghi rect;
+    int y = heightSuperior + (componenta-1) * heightIntreComponente + (componenta-1) * heightComponenta + heightComponenta/2;
+    int x = widthStanga + widthComponenta / 2;
+    rect.left = x - widthComponenta/2;
+    rect.top = y - heightComponenta/2;
+    rect.right = x + widthComponenta/2;
+    rect.bottom = y + heightComponenta/2;
+    rect.midx = x;
+    rect.midy = y;
+
+    return rect;
+
+}
+
+
+void creeazaOptiune(const int& width,const int& height,const int& componenta,const int& nrComponente,char mesaj[])
+{
+    if(nrOptiuni < nrComponente)
+    {
+        //Salvam fiecare optiune
+        optiune opt;
+
+        //Marimea fontului, optiunea se va adapta in lungime
+        int widthText = textwidth(mesaj);
+        int heightText = textheight(mesaj);
+        opt.heightText = heightText;
+        opt.widthText = widthText;
+
+        //Obtinem coordonatele dreptungiului, care determina pozitia optiunii pe ecran
+        dreptunghi drept = coordonateOptiune(width,height,componenta,nrComponente);
+        opt.drept = drept;
+
+        //Setam culoarea dreptunghiului
+        opt.culoare = 0;
+
+        //O memoram pentru a putea implementa click handlerul si pentru a calcula marimea celorlalte optiuni
+        nrOptiuni = componenta;
+        optiuni[nrOptiuni] = opt;
+    }
+
+      setcolor(BLACK);
+    //Afisam optiunea cu mesajul curent
+    rectangle(optiuni[componenta].drept.left,optiuni[componenta].drept.top,optiuni[componenta].drept.right,optiuni[componenta].drept.bottom);
+      setcolor(text_color);
+    //Afisam mesajul curent in mod centrat in dreptunghiul corespunzator
+    outtextxy(optiuni[componenta].drept.midx - optiuni[componenta].widthText / 2, optiuni[componenta].drept.midy - optiuni[componenta].heightText / 2, mesaj);
+
+}
+
+//Detecteaza daca o anumita coordonata se afla intr-un dreptunghi cu anumite coordonate
+bool clickInDrepunghi(dreptunghi drept,int x,int y)
+{
+    int left = drept.left;
+    int top = drept.top;
+    int right = drept.right;
+    int bottom = drept.bottom;
+
+    return (left <= x && x <= right && y >= top && y <= bottom);
+}
+
+void click_handler(int x,int y)
+{
+    for(int i=1; i<=nrOptiuni; i++)
+    {
+        if(clickInDrepunghi(optiuni[i].drept,x,y) && ecrane[0])
+        {
+            ecrane[0] = 0;
+            ecrane[i] = 1;
+            ecranCurent = i;
+            ok = 1;
+            ecran_schimbat=1;
+        }
+        if(ecrane[1] && x >= 0 && x <= 100 && y >= 0 && y <= 100)
+        {
+            cleardevice();
+            setbkcolor(BLACK);
+            clearviewport();
+
+            ecrane[0] = 1;
+            ecrane[1] = 0;
+            ecranCurent = 0;
+            ecran_schimbat=1;
+        }
+    }
+
+}
+
+//Ecranele programului
+
+//Meniul
+void ecran0()
+{
+    //Seteaza stilul si marimea fontului
+    //settextstyle(FONT_STYLE, HORIZ_DIR, FONT_SIZE);
+
+    //Ia marimea ecranului pentru a-l face responsive
+    int widthEcran = getmaxwidth(), heightEcran = getmaxheight()-25;
+    setbkcolor(fundal);clearviewport();
+    //Campurile meniului, se va specifica lungimea si inaltimea ecranului, a cata optiune este, numarul de optiuni si mesajul dorit
+    creeazaOptiune(widthEcran,heightEcran,1,4,"CREEAZA SCHEMA");
+    creeazaOptiune(widthEcran,heightEcran,2,4, "SALVATE");
+    creeazaOptiune(widthEcran,heightEcran,3,4, "SCRIE COD");
+    creeazaOptiune(widthEcran,heightEcran,4,4, "IESIRE");
+
+}
+
+
+void ecran1()
+{
+    if(ok)
+    {
+        init();
+        ok = 0;
+    }
+    //delay(100);
    if(event) deseneaza_schema(),event=0;
 
-   if(options && ismouseclick(WM_LBUTTONDOWN)) {click_optiuni(); continue ;}
+   if(options && ismouseclick(WM_LBUTTONDOWN)) {click_optiuni(); return  ;}
 
-   if(selectat>5 && ismouseclick(WM_RBUTTONDOWN)) {click_dreapta_pe_bloc(); continue ;}
+   if(selectat>5 && ismouseclick(WM_RBUTTONDOWN)) {click_dreapta_pe_bloc(); return  ;}
 
    if(bloc_nou!=-1 && ismouseclick(WM_RBUTTONDOWN))  anuleaza();
 
    if(bloc_nou!=-1) mutare();
 
    if(ismouseclick(WM_LBUTTONDOWN)) click_stanga();
+}
 
-  }
-getch();
+void ecran2()
+{
+    outtextxy(0,0, "Ecran2");
+}
+
+void ecran3()
+{
+    outtextxy(0,0, "Ecran3");
+}
+
+int main()
+{
+    ecrane[0] = 1; //Meniul este primul ecran apelat
+    ecranCurent = 0;
+
+   // int page = 1;  // Initializarea animatiei
+
+    //initwindow(1500,768);
+    initwindow(getmaxwidth(),getmaxheight()-25);
+
+    registermousehandler(WM_LBUTTONUP,click_handler); //Click Handlerul
+
+    do
+    { //if(ecran_schimbat)
+      //{ecran_schimbat=0;
+        delay(100);
+        if(ecrane[0])
+            ecran0();
+        else if(ecrane[1])
+            ecran1();
+        else if(ecrane[2]) ;
+            //ecran2();
+        else if(ecrane[3]) ;
+            //ecran3();
+        else if(ecrane[4])
+            exit(1);
+
+
+        //page = 1-page;
+
+    }
+    while(true);
+
+    getch();
+    closegraph();
+
     return 0;
 }
