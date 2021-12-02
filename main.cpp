@@ -355,6 +355,21 @@ void mutare()
     }
 }
 
+void bara_meniu(int x, int y)
+{  if(x >= 0 && x <= 100 && y >= 0 && y <= 100)
+        {
+            cleardevice();
+            setbkcolor(BLACK);
+            clearviewport();
+
+            ecrane[0] = 1;
+            ecrane[1] = 0;
+            ecranCurent = 0;
+            ecran_schimbat=1;
+        }
+
+}
+
 void click_stanga() /// click stanga pentru a plasa blocuri si pentru a adauga blocuri noi
 {int x=mousex(),y=mousey();
  clearmouseclick(WM_LBUTTONDOWN);
@@ -372,6 +387,7 @@ void click_stanga() /// click stanga pentru a plasa blocuri si pentru a adauga b
     }
  verifica_butoane(x,y);
  selectat=verifica_toate_blocurile(x,y);
+ bara_meniu(x,y);
  ///nod_selectat=verifica_toate_nodurile();
 }
 
@@ -446,7 +462,7 @@ bool clickInDrepunghi(dreptunghi drept,int x,int y)
     return (left <= x && x <= right && y >= top && y <= bottom);
 }
 
-void click_handler(int x,int y)
+/*void click_handler(int x,int y)
 {
     for(int i=1; i<=nrOptiuni; i++)
     {
@@ -472,7 +488,7 @@ void click_handler(int x,int y)
     }
 
 }
-
+*/
 //Ecranele programului
 
 //Meniul
@@ -489,29 +505,43 @@ void ecran0()
     creeazaOptiune(widthEcran,heightEcran,2,4, "SALVATE");
     creeazaOptiune(widthEcran,heightEcran,3,4, "SCRIE COD");
     creeazaOptiune(widthEcran,heightEcran,4,4, "IESIRE");
-
+    while(!ecran_schimbat)  /// cand se apasa pe o optiune de meniu, ecran_schimbat devine 1, se opreste loop-ul asta si se revine in loop-ul din main
+    {
+    if(ismouseclick(WM_LBUTTONDOWN))
+    { int x=mousex(),y=mousey();
+      clearmouseclick(WM_LBUTTONDOWN);
+      for(int i=1; i<=nrOptiuni; i++)
+      {
+         if(clickInDrepunghi(optiuni[i].drept,x,y) && ecrane[0])
+         {
+            ecrane[0] = 0;
+            ecrane[i] = 1;
+            ecranCurent = i;
+            ok = 1;
+            ecran_schimbat=1;
+         }
+      }
+    }
+    }
 }
 
 
 void ecran1()
-{
-    if(ok)
-    {
-        init();
-        ok = 0;
-    }
-    //delay(100);
+{  init();
+   while(!ecran_schimbat)
+   {delay(100);
    if(event) deseneaza_schema(),event=0;
 
-   if(options && ismouseclick(WM_LBUTTONDOWN)) {click_optiuni(); return  ;}
+   if(options && ismouseclick(WM_LBUTTONDOWN)) {click_optiuni(); continue ;}
 
-   if(selectat>5 && ismouseclick(WM_RBUTTONDOWN)) {click_dreapta_pe_bloc(); return  ;}
+   if(selectat>5 && ismouseclick(WM_RBUTTONDOWN)) {click_dreapta_pe_bloc(); continue ;}
 
    if(bloc_nou!=-1 && ismouseclick(WM_RBUTTONDOWN))  anuleaza();
 
    if(bloc_nou!=-1) mutare();
 
    if(ismouseclick(WM_LBUTTONDOWN)) click_stanga();
+   }
 }
 
 void ecran2()
@@ -534,11 +564,11 @@ int main()
     //initwindow(1500,768);
     initwindow(getmaxwidth(),getmaxheight()-25);
 
-    registermousehandler(WM_LBUTTONUP,click_handler); //Click Handlerul
+   // registermousehandler(WM_LBUTTONUP,click_handler); //Click Handlerul
 
     do
-    { //if(ecran_schimbat)
-      //{ecran_schimbat=0;
+    { if(ecran_schimbat)
+      {ecran_schimbat=0;
         delay(100);
         if(ecrane[0])
             ecran0();
@@ -550,7 +580,7 @@ int main()
             //ecran3();
         else if(ecrane[4])
             exit(1);
-
+      }
 
         //page = 1-page;
 
