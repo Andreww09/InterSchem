@@ -7,7 +7,7 @@ using namespace std;
 int color=COLOR(102,255,178),nod_color=YELLOW,fundal=WHITE,option_color=COLOR(128,128,255),text_color=YELLOW;
 int nr_blocuri=6,bloc_nou=-1,selectat=-1,raza=10;
 int colt_x=0,colt_y=50,lungime=1200,inaltime=600; /// zona unde pot fi puse blocuri
-bool event=1,optiuni=0;
+bool event=1,options=0;
 
 struct blocuri
 { int tip,nr;
@@ -226,7 +226,7 @@ void afiseaza_optiuni(int x, int y)
 }
 
 void init()
-{ int y=710,x=50,width=100,nr=1;
+{ int width=100,nr=1;
   setbkcolor(fundal);clearviewport();
   a[0]={0,0,50,710,"START"};
   a[1]={1,0,200,710,"STOP"};
@@ -287,7 +287,7 @@ void click_optiuni() /// click pe optiunile muta/sterge
  verifica_optiuni(selectat,x,y,a[selectat].x+a[selectat].width,a[selectat].y);
  event=1;
  selectat=-1;
- optiuni=0;
+ options=0;
 }
 
 void click_dreapta_pe_bloc()
@@ -295,7 +295,7 @@ void click_dreapta_pe_bloc()
  afiseaza_optiuni(a[selectat].x+a[selectat].width,a[selectat].y);
  clearmouseclick(WM_RBUTTONDOWN);
  event=0;
- optiuni=1;
+ options=1;
 }
 
 void anuleaza() /// click dreapta cand se muta un bloc pentru a anula actiunea
@@ -322,7 +322,7 @@ void click_stanga() /// click stanga pentru a plasa blocuri si pentru a adauga b
       if(apartine_zona(x,y))
             {if(bloc_nou<=5)
                 {a[nr_blocuri++]={bloc_nou,1,x,y};
-                 if(nr_blocuri>6) a[nr_blocuri-1].st=nr_blocuri-1;
+                 ///if(nr_blocuri>6) a[nr_blocuri-1].st=nr_blocuri-1;
                 }
              else a[bloc_nou].x=x,a[bloc_nou].y=y;
             }
@@ -340,7 +340,7 @@ int main()
   {delay(100);
    if(event) deseneaza_schema(),event=0;
 
-   if(optiuni && ismouseclick(WM_LBUTTONDOWN)) {click_optiuni(); continue ;}
+   if(options && ismouseclick(WM_LBUTTONDOWN)) {click_optiuni(); continue ;}
 
    if(selectat>5 && ismouseclick(WM_RBUTTONDOWN)) {click_dreapta_pe_bloc(); continue ;}
 
