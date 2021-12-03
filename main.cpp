@@ -21,6 +21,7 @@
 #define fundal WHITE
 #define option_color COLOR(128,128,255)
 #define text_color RED
+#define line_color RED
 
 using namespace std;
 
@@ -30,7 +31,7 @@ int ecranCurent; //Ecranul deschis in acest moment
 
 int nr_blocuri=6,bloc_nou=-1,selectat=-1,raza=10;
 bool event=1,options=0,ecran_schimbat=1;
-int ok = 1;
+int nod_dest=-1,nod_st=-1,nod_dr=-1;
 
 struct dreptunghi
 {
@@ -278,31 +279,50 @@ void init()
       desenare_bloc(a[i].x,a[i].y,a[i].tip,a[i].text);
 }
 
-bool apartine_nod()
-{
-
+bool apartine_nod(int i, int a, int b, int x, int y, int &nod)
+{ if(abs(b-y)+abs(a-x)<=raza)
+     {nod=i; return true;}
+  return false;
 }
 
-bool verifica_toate_nodurile()
+bool verifica_toate_nodurile(int x, int y)
 { for(int i=6;i<nr_blocuri;i++)
-     {
-
+     {bool ok=0;
+      switch (a[i].tip)
+        { case 0: {ok+=apartine_nod(i,x,y,a[i].x+a[i].width/2,a[i].y+a[i].height,nod_st); break ;}
+          case 1: {ok+=apartine_nod(i,x,y,a[i].x+a[i].width/2,a[i].y,nod_dest);  break ;}
+          case 4:
+              {ok+=apartine_nod(i,x,y,a[i].x+a[i].width/2,a[i].y,nod_dest);
+               ok+=apartine_nod(i,x,y,a[i].x,a[i].y+a[i].height,nod_st);
+               ok+=apartine_nod(i,x,y,a[i].x+a[i].width,a[i].y+a[i].height,nod_dr);
+               break ;
+              }
+          default :
+            {ok+=apartine_nod(i,x,y,a[i].x+a[i].width/2,a[i].y+a[i].height,nod_st);
+             ok+=apartine_nod(i,x,y,a[i].x+a[i].width/2,a[i].y,nod_dest);
+             break ;
+            }
+        }
+      if(ok) return true ;
      }
-
+  return false;
 }
 
 void trasare_legatura(int x, int y, int tip, int i)
 { /** x, y - pozitia nodului,  tip poate de ajuta la ceva
       (a[i].x+a[i].width/2, a[i].y)  sunt coordonatele nodului destinatie
     */
-
-    line(1,1,100,100);
+    setcolor(line_color);
+    line(x,y,a[i].x+a[i].width/2,a[i].y);
 
 }
 
 void deseneaza_legaturi()
 {for(int i=6;i<nr_blocuri;i++)
-       {if(a[i].st!=-1)  trasare_legatura(a[i].x,a[i].y+a[i].height,a[i].tip,a[i].st);
+       {if(a[i].st!=-1)
+            { if(a[i].tip==4) trasare_legatura(a[i].x,a[i].y+a[i].height,a[i].tip,a[i].st);
+              else trasare_legatura(a[i].x+a[i].width/2,a[i].y+a[i].height,a[i].tip,a[i].st);
+            }
         if(a[i].dr!=-1)  trasare_legatura(a[i].x+a[i].width,a[i].y+a[i].height,a[i].tip,a[i].dr);
        }
 }
@@ -378,17 +398,22 @@ void click_stanga() /// click stanga pentru a plasa blocuri si pentru a adauga b
     { x-=a[bloc_nou].width/2;
       if(apartine_zona(x,y))
             {if(bloc_nou<=5)
-                {a[nr_blocuri++]={bloc_nou,1,x,y};
-                 if(nr_blocuri>6) a[nr_blocuri-1].st=nr_blocuri-1;
-                }
+                a[nr_blocuri++]={bloc_nou,1,x,y};
              else a[bloc_nou].x=x,a[bloc_nou].y=y;
             }
       bloc_nou=-1;
     }
  verifica_butoane(x,y);
- selectat=verifica_toate_blocurile(x,y);
+ if(verifica_toate_nodurile(x,y))
+    { if(nod_dest!=-1)
+        { /// if(nod_dest==nod_st || nod_dest==nod_dr) se va afisa o eroare
+          if(nod_st!=-1)  a[nod_st].st=nod_dest,nod_st=nod_dest=-1;
+          if(nod_dr!=-1)  a[nod_dr].dr=nod_dest,nod_dr=nod_dest=-1;
+          //nod_dest=-1;
+        }
+    }
+    else selectat=verifica_toate_blocurile(x,y);
  bara_meniu(x,y);
- ///nod_selectat=verifica_toate_nodurile();
 }
 
 //Determina coordonatele unei optiuni in functie de marimile ecranului si proportiile alese (constantele de la inceputul programului)
@@ -517,7 +542,7 @@ void ecran0()
             ecrane[0] = 0;
             ecrane[i] = 1;
             ecranCurent = i;
-            ok = 1;
+            //ok = 1;
             ecran_schimbat=1;
          }
       }
