@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <winbgim.h>
 #include <string>
+#include <stack>
 
 #define MARGINE_SUPERIOARA 0.20
 #define DISTANTA_INTRE_COMPONENTE 0.05
@@ -10,6 +11,7 @@
 #define MARGINE_STANGA 0.40
 #define FONT_STYLE DEFAULT_FONT
 #define FONT_SIZE 0
+#define distanta_intre_blocuri 10
 /// zona unde pot fi puse blocurile
 #define colt_x 0
 #define colt_y 50
@@ -28,6 +30,7 @@ using namespace std;
 int ecrane[11]; // Numarul de ecrane al programului
 int nrOptiuni;  //Cate optiuni are meniul ( poate fi modificat prin apelarea de un numar dorit de ori a functiei creeazaOptiune )
 int ecranCurent; //Ecranul deschis in acest moment
+float variabile[27];
 
 int nr_blocuri=6,bloc_nou=-1,selectat=-1,raza=10;
 bool event=1,options=0,ecran_schimbat=1;
@@ -55,7 +58,7 @@ struct blocuri
   int width=100,height=50;
   char var1[5]="?",op[5]="+",var2[5]="?";
   char text[101];
-  int st=-1,dr=-1;
+  int st=-1,dr=-1,ant=-1;
   blocuri(int a=0,int b=0,int c=0,int d=0,char s1[51]="")
   {tip=a;nr=b;x=c;y=d;char s[51];
    strcpy(text,s1);
@@ -234,11 +237,13 @@ void verifica_butoane(int x, int y)
 }
 
 void sterge(int i)
-{ for(int j=i;j<nr_blocuri-1;j++)
+{ int j=a[i].ant;
+  if(a[j].st==i) a[j].st=-1;
+  if(a[j].tip==4 && a[j].dr==i) a[j].dr=-1;
+  for(int j=i;j<nr_blocuri-1;j++)
     a[j]=a[j+1];
   nr_blocuri--;
-  //for(int j=6;j<nr_blocuri;j++)
-  //  a[j].remove(i);
+
 }
 
 void verifica_optiuni(int i, int a, int b, int x, int y)
@@ -308,23 +313,289 @@ bool verifica_toate_nodurile(int x, int y)
   return false;
 }
 
-void trasare_legatura(int x, int y, int tip, int i)
-{ /** x, y - pozitia nodului,  tip poate de ajuta la ceva
-      (a[i].x+a[i].width/2, a[i].y)  sunt coordonatele nodului destinatie
-    */
+void trasare_legatura(int x1, int y1, int x2, int y2, int cx1, int cy1, int cx2, int cy2)   //(int tip,int nod1,int nod2,int dr)
+{
+    /** x, y - pozitia nodului,  tip poate de ajuta la ceva
+        (a[i].x+a[i].width/2, a[i].y)  sunt coordonatele nodului destinatie
+      */
+
     setcolor(line_color);
-    line(x,y,a[i].x+a[i].width/2,a[i].y);
+
+    /*if(tip == 4)
+    {
+        if(!dr)
+            x1 = a[nod1].x;
+        else
+            x1 = a[nod1].x + a[nod1].width;
+        y1 = a[nod1].y + a[nod1].height;
+    }
+    else
+    {
+        x1 = a[nod1].x + a[nod1].width / 2;
+        y1 = a[nod1].y + a[nod1].height;
+    }
+    x2 = a[nod2].x + a[nod2].width / 2;
+    y2 = a[nod2].y;
+
+    cout<<x1<<" "<<y1<<" "<<x2<<" "<<y2<<" "<<a[nod1].y<<endl;
+
+    int cx1 = min(a[nod1].x,a[nod1].x + a[nod1].width), cx2 = max(a[nod1].x,a[nod1].x + a[nod1].width);
+    int cy1 = min(a[nod2].x,a[nod2].x + a[nod2].width), cy2 = max(a[nod2].x,a[nod2].x + a[nod2].width);*/
+
+    if(y1 <= y2)
+    {
+        line(x1,y1,x1,(y1+y2)/2);
+        line(x1,(y1+y2)/2,x2,(y1+y2)/2);
+        line(x2,(y1+y2)/2,x2,y2);
+    }
+    else if(cx2 >= cy1 && cy2 >= cx1)
+    {
+        if(x2 <= x1)
+        {
+            line(x1,y1,x1,y1+25);
+            line(x1,y1+25,min(x1,x2) - 25,y1 + 25);
+            line(min(x1,x2) - 25,y1+25,min(x1,x2) - 25,y2 - 25);
+            line(min(x1,x2) - 25,y2 - 25,x2,y2 - 25);
+            line(x2,y2 - 25,x2,y2);
+        }
+        else
+        {
+            line(x1,y1,x1,y1+25);
+            line(x1,y1+25,max(cx1,cx2) + 25,y1 + 25);
+            line(max(cx1,cx2) + 25,y1+25,max(cx1,cx2) + 25,y2 - 25);
+            line(max(cx1,cx2) + 25,y2 - 25,x2,y2 - 25);
+            line(x2,y2 - 25,x2,y2);
+        }
+    }
+    else
+    {
+        if(y1 <= y2 && y2 <= y1)
+        {
+            line(x1,y1,x1,y1+25);
+
+            int dist = abs( (x2 + cx1) / 2 );
+            int dist2 = (y1 + y2 ) / 2;
+            line(x1,y1+25,dist,y1+25);
+            line(dist,y1+25,dist,dist2);
+            line(dist,dist2,x2,dist2);
+            line(x2,dist2,x2,y2);
+        }
+        else
+        {
+            line(x1,y1,x1,y1+25);
+            int dist = abs( (x2 + cx1) / 2 );
+            line(x1,y1 + 25,dist,y1+25);
+            line(dist,y1 + 25,dist,y2 - 25);
+            line(dist,y2 - 25,x2,y2 - 25);
+            line(x2,y2 - 25,x2,y2);
+
+        }
+    }
 
 }
+
 
 void deseneaza_legaturi()
 {for(int i=6;i<nr_blocuri;i++)
        {if(a[i].st!=-1)
-            { if(a[i].tip==4) trasare_legatura(a[i].x,a[i].y+a[i].height,a[i].tip,a[i].st);
-              else trasare_legatura(a[i].x+a[i].width/2,a[i].y+a[i].height,a[i].tip,a[i].st);
+            { if(a[i].tip==4)
+                trasare_legatura(a[i].x, a[i].y+a[i].height, a[a[i].st].x+a[a[i].st].width/2, a[a[i].st].y,
+                                 a[i].x+a[i].width, a[i].y+a[i].height, a[i].x+a[a[i].st].width, a[a[i].st].y+a[a[i].st].height);
+              else
+                trasare_legatura(a[i].x+a[i].width/2, a[i].y+a[i].height, a[a[i].st].x+a[a[i].st].width/2, a[a[i].st].y,
+                                 a[i].x+a[i].width, a[i].y+a[i].height, a[i].x+a[a[i].st].width, a[a[i].st].y+a[a[i].st].height);
             }
-        if(a[i].dr!=-1)  trasare_legatura(a[i].x+a[i].width,a[i].y+a[i].height,a[i].tip,a[i].dr);
+        if(a[i].dr!=-1)
+            trasare_legatura(a[i].x+a[i].width, a[i].y+a[i].height, a[a[i].dr].x+a[a[i].dr].width/2, a[a[i].dr].y,
+                             a[i].x+a[i].width, a[i].y+a[i].height, a[a[i].dr].x+a[a[i].dr].width, a[a[i].dr].y+a[a[i].dr].height);
        }
+}
+
+float applyOperator(char op,float nr1,float nr2)
+{
+    if(op == '+')
+    {
+        return (nr1 + nr2);
+    }
+    else if(op == '-')
+    {
+        return(nr2 - nr1);
+    }
+    else if(op == '*')
+    {
+        return (nr1 * nr2);
+    }
+    else if(op == '/')
+    {
+        return (nr2 / nr1);
+    }
+}
+
+int precedence(char ch)
+{
+    if(ch == '-' || ch == '+')
+        return 0;
+    else if(ch == '*' || ch == '/')
+        return 1;
+    else return 2;
+}
+
+void operatieStiva(stack<char>& operatori, stack<float>& valori)
+{
+    char op = operatori.top();
+    float nr1 = valori.top();
+    valori.pop();
+    float nr2 = valori.top();
+    valori.pop();
+
+    valori.push(applyOperator(op,nr1,nr2));
+
+}
+
+float evaluateExpresion(char sir[],int i,int j)
+{
+    stack<char> operatori;
+    stack<float> valori;
+
+    for(int k = i; k<=j; k++)
+    {
+        if(isalpha(sir[k]))
+        {
+            valori.push(variabile[sir[k] - 'a']);
+        }
+        else if(isdigit(sir[k]))
+        {
+            float numar = 0;
+
+            int p = k;
+            while(isdigit(sir[p]))
+            {
+                numar = numar * 10 + (sir[p] - '0');
+                p++;
+            }
+            k = p - 1;
+            valori.push(numar);
+        }
+        else if(sir[k] == '(')
+        {
+            operatori.push(sir[k]);
+        }
+        else if(sir[k] == ')')
+        {
+            while(!operatori.empty() && operatori.top() != '(')
+            {
+                operatieStiva(operatori,valori);
+                operatori.pop();
+            }
+            operatori.pop();
+        }
+        else
+        {
+            while(!operatori.empty() && operatori.top() != '(' && precedence(sir[k]) <= precedence(operatori.top()))
+            {
+                operatieStiva(operatori,valori);
+                operatori.pop();
+            }
+            operatori.push(sir[k]);
+        }
+    }
+
+    while(!operatori.empty() && operatori.top() != ')')
+    {
+        operatieStiva(operatori,valori);
+        operatori.pop();
+    }
+    return valori.top();
+}
+
+float evaluateEquality(char sir[],int i,int j)
+{
+    int variabila;
+    char op = 'x';
+    char aux[100];
+    if(isalpha(sir[i-2]))
+    {
+        variabila = sir[i-2] - 'a';
+    }
+    else
+    {
+        op = sir[i-2];
+        variabila = sir[i-3] - 'a';
+    }
+
+
+    float val = evaluateExpresion(sir,i,j);
+    if(op != 'x')
+    {
+        variabile[variabila] = applyOperator(op,val,variabile[variabila]);
+    }
+    else
+        variabile[variabila] = val;
+
+    for(int k=i;k<=j;k++)
+        cout<<sir[k];
+    cout<<endl;
+
+    return variabile[variabila];
+}
+
+float evaluateTerm(char sir[],int i,int j)
+{
+    //cout<<i<<" "<<j<<endl;
+    float val = 0;
+    int ok = 0;
+
+    int n = strlen(sir);
+    int last = j;
+    for(int k = j ; k >= i; k--)
+    {
+        if(sir[k] == '=')
+        {
+            ok = 1;
+            val = evaluateEquality(sir,k+1,last);
+
+            k--;
+        }
+    }
+    if(!ok)
+        val = evaluateExpresion(sir,i,j);
+
+    return val;
+}
+
+float evalExpresie(char sir[])
+{
+    // evalueaza operatii de forma x = expresie
+    int n = strlen(sir);
+
+    // "x =  x + 1"
+    for(int i=0; i<n; i++)
+    {
+        if(sir[i] == ' ')
+        {
+            strcpy(sir+i,sir+i+1);
+            i--;
+        }
+    }
+    n = strlen(sir);
+
+    int first = 0;
+    float val = 0;
+
+    for(int i = 0; i < n; i++)
+    {
+        if(sir[i] == ',' || i == n - 1)
+        {
+            if(sir[i] == ',')
+                val = evaluateTerm(sir,first,i-1);
+            else
+                val = evaluateTerm(sir,first,i);
+
+            first = i + 1;
+        }
+    }
+
+    return val;
 }
 
 void deseneaza_schema()
@@ -390,13 +661,27 @@ void bara_meniu(int x, int y)
 
 }
 
+bool intersectare_dreptunghiuri(int x1, int y1, int x2, int y2, int cx1, int cy1, int cx2, int cy2)
+{ int d=distanta_intre_blocuri;
+  if(cx1+d<x2 || x1>cx2+d || cy1+d<y2 || y1>cy2+d) return false;
+     return true;
+}
+
+bool intersecteaza_alte_blocuri(int x, int y)
+{ for(int i=6;i<nr_blocuri;i++)
+      if(intersectare_dreptunghiuri(x,y,a[i].x,a[i].y,x+a[0].width,y+a[0].height,a[i].x+a[i].width,a[i].y+a[i].height)) return true;
+  return false;
+}
+
 void click_stanga() /// click stanga pentru a plasa blocuri si pentru a adauga blocuri noi
 {int x=mousex(),y=mousey();
  clearmouseclick(WM_LBUTTONDOWN);
  event=1;
  if(bloc_nou!=-1)
     { x-=a[bloc_nou].width/2;
-      if(apartine_zona(x,y))
+      bool inter=intersecteaza_alte_blocuri(x,y);
+      ///if(inter)  se va afisa o eroare
+      if(apartine_zona(x,y) && !inter)
             {if(bloc_nou<=5)
                 a[nr_blocuri++]={bloc_nou,1,x,y};
              else a[bloc_nou].x=x,a[bloc_nou].y=y;
@@ -405,11 +690,18 @@ void click_stanga() /// click stanga pentru a plasa blocuri si pentru a adauga b
     }
  verifica_butoane(x,y);
  if(verifica_toate_nodurile(x,y))
-    { if(nod_dest!=-1)
+    { if(nod_dest!=-1 && a[nod_dest].ant==-1)
         { /// if(nod_dest==nod_st || nod_dest==nod_dr) se va afisa o eroare
-          if(nod_st!=-1)  a[nod_st].st=nod_dest,nod_st=nod_dest=-1;
-          if(nod_dr!=-1)  a[nod_dr].dr=nod_dest,nod_dr=nod_dest=-1;
-          //nod_dest=-1;
+          if(nod_st!=-1)
+            {a[nod_st].st=nod_dest;
+             a[nod_dest].ant=nod_st;
+             nod_st=nod_dest=-1;
+            }
+          if(nod_dr!=-1)
+            {a[nod_dr].dr=nod_dest;
+             a[nod_dest].ant=nod_dr;
+             nod_dr=nod_dest=-1;
+            }
         }
     }
     else selectat=verifica_toate_blocurile(x,y);
