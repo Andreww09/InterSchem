@@ -520,7 +520,7 @@ bool apartine_nod(int i, int a, int b, int x, int y, int &nod)
 
 bool verifica_toate_nodurile(int x, int y)
 {x+=ecran_x;y+=ecran_y-colt_y;
- nod_st=nod_dr=-1;
+ int nod1=nod_st,nod2=nod_dr;
  for(int i=6;i<nr_blocuri;i++)
      {bool ok=0;
       switch (a[i].tip)
@@ -538,7 +538,13 @@ bool verifica_toate_nodurile(int x, int y)
              break ;
             }
         }
-      if(ok) return true ;
+      if(ok)
+      { if(nod_st!=-1 && nod_dr!=-1)
+            { if(nod1!=-1) nod_dr=-1;
+              if(nod2!=-1) nod_st=-1;
+            }
+          return true ;
+      }
      }
   return false;
 }
