@@ -520,6 +520,7 @@ bool apartine_nod(int i, int a, int b, int x, int y, int &nod)
 
 bool verifica_toate_nodurile(int x, int y)
 {x+=ecran_x;y+=ecran_y-colt_y;
+ nod_st=nod_dr=-1;
  for(int i=6;i<nr_blocuri;i++)
      {bool ok=0;
       switch (a[i].tip)
@@ -1049,16 +1050,16 @@ void click_stanga() /// click stanga pentru a plasa blocuri si pentru a adauga b
           if(nod_st!=-1)
             {a[nod_st].st=nod_dest;
              a[nod_dest].ant=nod_st;
-             nod_st=nod_dest=-1;
+             nod_st=nod_dr=nod_dest=-1;
             }
           if(nod_dr!=-1)
             {a[nod_dr].dr=nod_dest;
              a[nod_dest].ant=nod_dr;
-             nod_dr=nod_dest=-1;
+             nod_dr=nod_st=nod_dest=-1;
             }
         }
     }
-    else selectat=verifica_toate_blocurile(x,y);
+    else nod_st=nod_dr=nod_dest=-1,selectat=verifica_toate_blocurile(x,y);
  bara_meniu(x,y);
  verifica_zoom(x,y);
 }
