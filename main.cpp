@@ -4,6 +4,7 @@
 #include <string>
 #include <stack>
 #include <list>
+#include "evaluareExp.h"
 
 #define MARGINE_SUPERIOARA 0.20
 #define DISTANTA_INTRE_COMPONENTE 0.05
@@ -15,6 +16,7 @@
 #define distanta_intre_blocuri 10
 #define distanta_max_leg 25
 #define NMAX 201
+#define NR_ERORI 20
 #define max_zoom 8
 #define option_width 100
 #define option_height 45
@@ -53,15 +55,19 @@ using namespace std;
 int ecrane[11]; // Numarul de ecrane al programului
 int nrOptiuni;  //Cate optiuni are meniul ( poate fi modificat prin apelarea de un numar dorit de ori a functiei creeazaOptiune )
 int ecranCurent; //Ecranul deschis in acest moment
-float variabile[27];
 
 int nr_blocuri=6,bloc_nou=-1,selectat=-1,raza=7,dist_leg=distanta_max_leg;
-bool event=1,options=0,ecran_schimbat=1,bloc_start=0;
+bool event=1,options=0,ecran_schimbat=1;
+int nr_blocuri_start=0,start_main=0;
 int nod_dest=-1,nod_st=-1,nod_dr=-1;
 int culori_butoane[5]={RED,GREEN,RED,LIGHTBLUE,GREEN},nr_butoane=5;
 int zoom_ratio=5,indice_zoom=4; /// zoom_ratio=5 va insemna 1/5 adica 20%
 int ecran_x,ecran_y;
 char mesaje_butoane[5][NMAX]={"Inapoi","Salvare","Executa","Undo","Redo"};
+bool error[NR_ERORI];
+char mesaje_eroare[NR_ERORI][100]={"","Blocul % nu este legat\n","Blocul % nu are o expresie corecta\n","Programul nu este legat la nici un bloc de tip stop\n",
+"Programul nu are niciun bloc de tip start\n"};
+char mesaje_rezultat[3][100]={"Variabila % are valoarea ","Rezultatul este "};
 
 void zoom_bloc(int,int);
 
@@ -93,6 +99,19 @@ struct optiune
 
 } optiuni[11];
 
+struct erori
+{int bloc,nr;
+ erori(int a, int b)
+ { bloc=a;nr=b;}
+};
+stack<erori> S ;
+
+struct afisari
+{ int caz,val;
+  afisari(int a, int b)
+ { caz=a;val=b;}
+};
+stack<afisari> Rezultat;
 
 struct blocuri
 { int tip,nr;
@@ -328,7 +347,8 @@ void verifica_butoane(int x, int y)
 
 void sterge(int i)
 { list<int>::iterator it;
-  if(a[i].tip==0) bloc_start=0;
+  if(a[i].tip==0) nr_blocuri_start--;
+  if(i==start_main) start_main=0;
   for(it=a[i].ant.begin();it!=a[i].ant.end();it++)
   { if(a[*it].st==i) a[*it].st=-1;
     if(a[*it].tip==4 && a[*it].dr==i) a[*it].dr=-1;
@@ -476,7 +496,7 @@ if(getch()==0) c=getch();
 void init()
 { int y=710,x=50;
   nr_blocuri=6;
-  bloc_start=0;
+  nr_blocuri_start=0;
   indice_zoom=4;
   ecran_x=min_x_ecran;ecran_y=min_y_ecran;
   setbkcolor(fundal);clearviewport();
@@ -552,12 +572,14 @@ void citeste_text(int i)
   {c=getch();
    if(c==8 && n>0) n--,s[n]='\0',sterge_info();
    if(!verifica_textbox(s)) {continue;}
-   if(c!=8 && c!=13)  s[n++]=c,s[n]='\0';;
+   if(c!=8 && c!=13)  s[n++]=c,s[n]='\0';
    deseneaza_text(s);
   }
   //if(evalExpresie(s))
-    strcpy(a[i].text,s);
 
+    strcpy(a[i].text,s);
+/*cout<<evalueazaExpresie(a[i].text)<<'\n';
+   for(int j=0;j<26;j++) cout<<(char)('a'+j)<<' '<<variabile[j]<<'\n';*/
 }
 
 bool apartine_nod(int i, int a, int b, int x, int y, int &nod)
@@ -1030,13 +1052,104 @@ void inapoi()
  ecran_schimbat=1;
 }
 
+void number_to_text(int n, char* s)
+{ int nr=0;
+  while(n)
+  { s[nr++]='0'+(n%10);
+    n/=10;
+  }
+  s[nr]='\0';
+  for(int i=0;i<nr/2;i++)
+  {int aux=s[i];
+   s[i]=s[nr-i-1];
+   s[nr-i-1]=aux;
+  }
+}
+
+void afiseaza_erori()
+{ //S.push({21,0});S.push({6110,1});
+  while(!S.empty())
+     {
+    if(S.top().bloc==0)
+        { cout<<mesaje_eroare[S.top().nr];
+
+        }
+    else
+        {int bloc=S.top().bloc,nr=S.top().nr;
+         char *p,s[NMAX],aux[NMAX];
+         number_to_text(bloc,aux);
+         if(nr<=1)
+            {strcpy(s,mesaje_eroare[nr]);
+             p=strchr(s,'%');
+             p[0]='\0';
+             cout<<s<<' '<<aux<<p+1<<'\n';
+            }
+        }
+    S.pop();
+    }
+}
+
+void afiseaza_rezultat()
+{ while(!Rezultat.empty())
+    { cout<<mesaje_rezultat[Rezultat.top().caz]<<Rezultat.top().val<<'\n';
+      Rezultat.pop();
+    }
+
+}
+
+void verifica_erori_desen()
+{ if(start_main<6) S.push({0,3});
+  bool stop=0;
+  for(int i=6;i<nr_blocuri;i++)
+     if(a[i].tip!=0)
+     {   int nr_leg=0;
+         int nr_total_leg=2;
+         if(a[i].tip==1)
+            { if(!a[i].ant.empty()) stop=1;
+              continue ;
+            }
+         if(a[i].tip>1)
+             {if(a[i].st!=-1) nr_leg++;
+              if(!a[i].ant.empty()) nr_leg++;
+             }
+         if(a[i].tip==4)
+         {nr_total_leg=3;
+          if(a[i].dr!=-1) nr_leg++;
+         }
+         if(nr_total_leg!=nr_leg && nr_leg!=0) S.push({i,0});
+     }
+  if(!stop) S.push({0,2});
+  if(!S.empty()) eroare=1;
+}
+
 void salvare()
 {
 afiseaza_toate_legaturile();
 }
 
 void executa()
-{
+{ eroare=0;//cout<<evalueazaExpresie("a=2+3");
+  verifica_erori_desen();
+  int i=start_main,rez;
+  while(a[i].tip!=1 && !eroare)
+  { if(a[i].tip>1)
+        rez=evalueazaExpresie(a[i].text);
+     if(!eroare)
+            { if(a[i].tip==3) Rezultat.push({1,rez});
+              if(a[i].st!=-1)  i=a[i].st;
+                  else eroare=1;
+              if(a[i].tip==4)
+                 {if(a[i].dr!=-1)
+                      i=a[i].dr;
+                  else eroare=1;
+
+                 }
+            }
+  }
+  if(eroare)
+    afiseaza_erori();
+    else afiseaza_rezultat();
+
 
 }
 
@@ -1098,16 +1211,15 @@ void click_stanga() /// click stanga pentru a plasa blocuri si pentru a adauga b
                 { x1=((x+ecran_x)*zoom_ratio)/(indice_zoom-4+zoom_ratio);
                   y1=((y+ecran_y-colt_y)*zoom_ratio)/(indice_zoom-4+zoom_ratio);
                 }
-             if(bloc_nou==0)
-                {if(bloc_start==0)
-                 {bloc_start=1;
+             if(bloc_nou==0 && start_main==0)
+                 {start_main=nr_blocuri;
                   a[nr_blocuri]={bloc_nou,1,x,y};
                   a[nr_blocuri].x1=x1;a[nr_blocuri++].y1=y1;
                  }
-                }
              else if(bloc_nou<=5)
                     {a[nr_blocuri]={bloc_nou,1,x,y};
                      a[nr_blocuri].x1=x1;a[nr_blocuri++].y1=y1;
+                     if(bloc_nou==0) nr_blocuri_start++;
                     }
              else
                 {a[bloc_nou].x=x;
