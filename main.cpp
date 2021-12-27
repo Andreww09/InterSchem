@@ -20,8 +20,8 @@
 #define NMAX 201
 #define NR_ERORI 20
 #define max_zoom 8
-#define option_width 100
-#define option_height 45
+#define option_width 160
+#define option_height 22
 #define distanta_mutare_ecran 50
 #define min_x_ecran 0
 #define max_x_ecran 12000
@@ -38,24 +38,36 @@
 #define plus_x 1100
 #define plus_y 670
 #define latura_zoom 20
+///coordonatele butoanelor viteza executie
+#define minusV_x 1220
+#define minusV_y 630
+#define plusV_x 1470
+#define plusV_y 630
+#define latura_v 20
 ///coordonatele butoanelor left-right de eroare
 #define left_x 1450
 #define left_y 90
 #define latura_left 20
 #define dist_left 40
+///coordonatele butonului pentru codul c++
+#define cod_x 1250
+#define cod_y 500
+#define cod_width 230
+#define cod_height 40
 ///zona de informatii
 #define info_x 1200
 #define info_y 50
 #define info_width 400
 #define info_height 100
 #define max_text_height 75
+///
+#define set_raza 10
+#define set_dist 10
+#define set_nod_x 280
 /// culorile folosite
-#define color COLOR(102,255,178)
-#define nod_color YELLOW
-#define fundal WHITE
-#define option_color COLOR(128,128,255)
-#define text_color RED
-#define line_color RED
+#define nr_culori 15
+#define cod_color LIGHTGRAY
+#define culoare_text RED
 
 using namespace std;
 
@@ -64,20 +76,28 @@ int nrOptiuni;  //Cate optiuni are meniul ( poate fi modificat prin apelarea de 
 int ecranCurent; //Ecranul deschis in acest moment
 
 int nr_blocuri=6,bloc_nou=-1,selectat=-1,raza=7,dist_leg=distanta_max_leg,distanta_intre_blocuri=20;
-bool event=1,options=0,ecran_schimbat=1,rezult;
+bool event=1,options=0,ecran_schimbat=1,rezult,continuare=0;
 int nr_blocuri_start=0,start_main=0;
 int nod_dest=-1,nod_st=-1,nod_dr=-1;
-int culori_butoane[5]={RED,GREEN,RED,LIGHTBLUE,GREEN},nr_butoane=5;
+int culori_butoane[6]={COLOR(249,5,5),COLOR(250,255,77),COLOR(95,255,77),LIGHTBLUE,COLOR(46,255,193),COLOR(46,165,255)},nr_butoane=6;
 int zoom_ratio=5,indice_zoom=4; /// zoom_ratio=5 va insemna 1/5 adica 20%
 int ecran_x,ecran_y;
-char mesaje_butoane[5][NMAX]={"Inapoi","Salvare","Executa","Undo","Redo"};
+int viteza=200;
+char mesaje_butoane[6][NMAX]={"Inapoi","Salvare","Executa","Undo","Redo","Ajutor"};
 bool error[NR_ERORI];
 int indice_info,indice_undo;
-char mesaje_eroare[NR_ERORI][100]={"Blocul % nu este legat\n","Blocul % nu are o expresie corecta\n","Programul nu este legat la nici un bloc de tip stop\n",
-"Programul nu are niciun bloc de tip start\n"};
+char mesaje_eroare[NR_ERORI][100]={"Blocul % nu este legat\n","Blocul % nu are o expresie corecta\n","Programul nu este   legat la nici un bloc de tip stop\n",
+"Programul nu are niciun bloc de tip start\n","Valoare gresita\n"};
 char mesaje_rezultat[3][100]={"Variabila % are valoarea % ","Rezultatul blocului % este % "};
+int nr_setari=6;
+char mesaje_setari[8][NMAX]={"CULOARE FUNDAL","CULOARE BLOCURI","CULOARE NODURI","CULOARE LEGATURI","CULOARE TEXT","CULOARE BLOCURI","IN TIMPUL EXECUTIEI"};
+//int culori[11]={COLOR(),COLOR(),COLOR(),COLOR(),COLOR(),COLOR(),COLOR(),COLOR(),COLOR(),COLOR()};
+int culori[20]={0x330033,0xFFFFFF,0xF00000,0xFF8000,0xFFFF33,0x66FFB2,0x009900,0x33FFFF,0x99FF99,COLOR(76,0,153),0x6666FF,0x0080FF,0x3333FF,0x7F00FF,COLOR(178,103,252),COLOR(153,51,255)};
+int fundal=culori[1],text_color=culori[0],color=culori[5],nod_color=culori[6]-2,option_color=culori[5],line_color=culori[12],mark_color=COLOR(76,0,153);
+int indice_culori[7]={1,5,6,12,0,9};
 
 void zoom_bloc(int,int);
+void ecran1();
 
 struct punct
 {
@@ -183,26 +203,30 @@ vector<schimbari> undo;
 void deseneaza_start(int x, int y, char s[NMAX]="START", int width=100, int height=50)
 {
     int lung_text=textwidth(s);
-    setcolor(BLACK);
-    outtextxy(x+width/2-lung_text/2,y+height/2-textheight("W")/2,s);
+    setbkcolor(color);
+    setcolor(text_color);
     rectangle(x,y,x+width,y+height);
     setfillstyle(SOLID_FILL,color);
-    floodfill(x+width/2,y+height-1,BLACK);
+    floodfill(x+width/2,y+height-1,text_color);
+    circle(x+width/2,y+height,raza);
     setfillstyle(SOLID_FILL,nod_color);
     fillellipse(x+width/2,y+height,raza,raza);
+    outtextxy(x+width/2-lung_text/2,y+height/2-textheight("W")/2,s);
 }
 
 
 void deseneaza_stop(int x, int y, char s[NMAX]="STOP", int width=100, int height=50)
 {
     int lung_text=textwidth(s);
-    setcolor(BLACK);
-    outtextxy(x+width/2-lung_text/2,y+height/2-textheight("W")/2,s);
+    setbkcolor(color);
+    setcolor(text_color);
     rectangle(x,y,x+width,y+height);
     setfillstyle(SOLID_FILL,color);
-    floodfill(x+width/2,y+height-1,BLACK);
+    floodfill(x+width/2,y+height-1,text_color);
+    circle(x+width/2,y,raza);
     setfillstyle(SOLID_FILL,nod_color);
     fillellipse(x+width/2,y,raza,raza);
+    outtextxy(x+width/2-lung_text/2,y+height/2-textheight("W")/2,s);
 }
 
 void deseneaza_intrare(int x, int y, char s[NMAX]="INTRARE", int width=100, int height=50)
@@ -210,7 +234,7 @@ void deseneaza_intrare(int x, int y, char s[NMAX]="INTRARE", int width=100, int 
     int dist=width/5,lung_text=textwidth(s);
     char s1[NMAX];
     strcpy(s1,s);
-    setcolor(BLACK);
+    setbkcolor(color);
     if(lung_text>width-dist)
     {
         int n=(width-dist)/textwidth("M");
@@ -218,16 +242,19 @@ void deseneaza_intrare(int x, int y, char s[NMAX]="INTRARE", int width=100, int 
         strcat(s1,"...");
         lung_text=textwidth(s1);
     }
-    outtextxy(x+width/2-lung_text/2,y+height/2-textheight("W")/2,s1);
+    setcolor(text_color);
     line(x,y,x+width,y);
     line(x+width,y,x+width-dist,y+height);
     line(x+width-dist,y+height,x+dist,y+height);
     line(x+dist,y+height,x,y);
     setfillstyle(SOLID_FILL,color);
-    floodfill(x+width/2,y+height-1,BLACK);
+    floodfill(x+width/2,y+height-1,text_color);
+    circle(x+width/2,y+height,raza);
+    circle(x+width/2,y,raza);
     setfillstyle(SOLID_FILL,nod_color);
     fillellipse(x+width/2,y+height,raza,raza);
     fillellipse(x+width/2,y,raza,raza);
+    outtextxy(x+width/2-lung_text/2,y+height/2-textheight("W")/2,s1);
 }
 
 void deseneaza_iesire(int x, int y, char s[NMAX]="IESIRE", int width=100, int height=50)
@@ -235,7 +262,7 @@ void deseneaza_iesire(int x, int y, char s[NMAX]="IESIRE", int width=100, int he
     int dist=width/5,lung_text=textwidth(s);
     char s1[NMAX];
     strcpy(s1,s);
-    setcolor(BLACK);
+    setbkcolor(color);
     if(lung_text>width-dist)
     {
         int n=(width-dist)/textwidth("M");
@@ -243,16 +270,19 @@ void deseneaza_iesire(int x, int y, char s[NMAX]="IESIRE", int width=100, int he
         strcat(s1,"...");
         lung_text=textwidth(s1);
     }
-    outtextxy(x+width/2-lung_text/2,y+height/2-textheight("W")/2,s1);
+    setcolor(text_color);
     line(x+dist,y,x+width-dist,y);
     line(x+width-dist,y,x+width,y+height);
     line(x+width,y+height,x,y+height);
     line(x,y+height,x+dist,y);
     setfillstyle(SOLID_FILL,color);
-    floodfill(x+width/2,y+height-1,BLACK);
+    floodfill(x+width/2,y+height-1,text_color);
+    circle(x+width/2,y+height,raza);
+    circle(x+width/2,y,raza);
     setfillstyle(SOLID_FILL,nod_color);
     fillellipse(x+width/2,y+height,raza,raza);
     fillellipse(x+width/2,y,raza,raza);
+    outtextxy(x+width/2-lung_text/2,y+height/2-textheight("W")/2,s1);
 }
 
 void deseneaza_decizie(int x, int y, char s[NMAX]="DECIZIE", int width=100, int height=50)
@@ -260,7 +290,7 @@ void deseneaza_decizie(int x, int y, char s[NMAX]="DECIZIE", int width=100, int 
     int lung_text=textwidth(s);
     char s1[NMAX];
     strcpy(s1,s);
-    setcolor(BLACK);
+    setbkcolor(color);
     if(lung_text>width-45)
     {
         int n=(width-45)/textwidth("M");
@@ -268,16 +298,20 @@ void deseneaza_decizie(int x, int y, char s[NMAX]="DECIZIE", int width=100, int 
         strcat(s1,"...");
         lung_text=textwidth(s1);
     }
-    outtextxy(x+width/2-lung_text/2,y+height/2-textheight("W")/4,s1);
+    setcolor(text_color);
     line(x,y+height,x+width/2,y);
     line(x+width/2,y,x+width,y+height);
     line(x+width,y+height,x,y+height);
     setfillstyle(SOLID_FILL,color);
-    floodfill(x+width/2,y+height-1,BLACK);
+    floodfill(x+width/2,y+height-1,text_color);
+    circle(x+width/2,y,raza);
+    circle(x,y+height,raza);
+    circle(x+width,y+height,raza);
     setfillstyle(SOLID_FILL,nod_color);
     fillellipse(x+width/2,y,raza,raza);
     fillellipse(x,y+height,raza,raza);
     fillellipse(x+width,y+height,raza,raza);
+    outtextxy(x+width/2-lung_text/2,y+height/2,s1);
 }
 
 void deseneaza_calcul(int x, int y, char s[NMAX]="CALCUL", int width=100, int height=50)
@@ -285,7 +319,7 @@ void deseneaza_calcul(int x, int y, char s[NMAX]="CALCUL", int width=100, int he
     int lung_text=textwidth(s);
     char s1[NMAX];
     strcpy(s1,s);
-    setcolor(BLACK);
+    setbkcolor(color);
 //  setusercharsize()
     /// settextstyle(6,HORIZ_DIR,1);///0 6 9
     if(lung_text>width-10)
@@ -295,13 +329,16 @@ void deseneaza_calcul(int x, int y, char s[NMAX]="CALCUL", int width=100, int he
         strcat(s1,"...");
         lung_text=textwidth(s1);
     }
-    outtextxy(x+width/2-lung_text/2,y+height/2-textheight("W")/2,s1);
+    setcolor(text_color);
     rectangle(x,y,x+width,y+height);
     setfillstyle(SOLID_FILL,color);
-    floodfill(x+width/2,y+height-1,BLACK);
+    floodfill(x+width/2,y+height-1,text_color);
+    circle(x+width/2,y+height,raza);
+    circle(x+width/2,y,raza);
     setfillstyle(SOLID_FILL,nod_color);
     fillellipse(x+width/2,y+height,raza,raza);
     fillellipse(x+width/2,y,raza,raza);
+    outtextxy(x+width/2-lung_text/2,y+height/2-textheight("W")/2,s1);
 }
 
 void desenare_bloc(int i)
@@ -558,13 +595,52 @@ void verifica_optiuni(int i, int a1, int b, int x, int y)
     //x-=ecran_x;y-=ecran_y-colt_y;
     if(x+option_width>colt_x+lungime) x-=option_width+100;
     if(y+option_height>colt_y+inaltime) y-=y+option_height-colt_y-inaltime;
-    if(a1>x+option_width || a1<x || b>y+option_height || b<y) return ;
-    if(b>y+option_height/2)
+    int nr=4;
+    if(a[selectat].tip!=4) nr--;
+    if(a1>x+option_width || a1<x || b>y+nr*option_height || b<y) return ;
+    nr=(b-y)/option_height;
+    if(nr==1)
     {
         sterge(i);
         return ;
     }
+    if(nr==2)
+    {
+        if(a[selectat].st==-1) return ;
+        adauga_undo();
+        undo.push_back({5,selectat,a[selectat].st});
+        sterge_legatura(selectat,a[selectat].st,0);
+        return ;
+    }
+    if(nr==3 && a[selectat].tip==4)
+    {
+        if(a[selectat].dr==-1) return ;
+        adauga_undo();
+        undo.push_back({5,selectat,a[selectat].dr,0,0,0,0,1});
+        sterge_legatura(selectat,a[selectat].dr,1);
+        return ;
+    }
     bloc_nou=i;
+}
+
+void desenare_optiuni(int x, int y, int nr, char s1[]="", char s2[]="", char s3[]="", char s4[]="" )
+{
+    char mesaje[5][100];
+    strcpy(mesaje[0],s1);
+    strcpy(mesaje[1],s2);
+    strcpy(mesaje[2],s3);
+    strcpy(mesaje[3],s4);
+    if(selectat!=-1 && a[selectat].tip!=4) nr--;
+    setcolor(BLACK);
+    setbkcolor(option_color);
+    rectangle(x,y,x+option_width,y+nr*option_height);
+    setfillstyle(SOLID_FILL,option_color);
+    floodfill(x+10,y+10,BLACK);
+    for(int i=1;i<=nr;i++)
+        {int lung_text=textwidth(mesaje[i-1]);
+         outtextxy(x+option_width/2-lung_text/2,y+5+(i-1)*option_height,mesaje[i-1]);
+         line(x,y+i*option_height,x+option_width,y+i*option_height);
+        }
 }
 
 void afiseaza_optiuni(int x, int y)
@@ -573,23 +649,26 @@ void afiseaza_optiuni(int x, int y)
 // x-=ecran_x;y-=ecran_y-colt_y;
     if(x+option_width>colt_x+lungime) x-=option_width+100;
     if(y+option_height>colt_y+inaltime) y-=y+option_height-colt_y-inaltime;
-    setcolor(BLACK);
+    desenare_optiuni(x,y,4,"MUTA","STERGE","STERGE NOD STANGA","STERGE NOD DREAPTA");
+   /* setcolor(BLACK);
+    setbkcolor(option_color);
     rectangle(x,y,x+option_width,y+option_height);
     lung_text=textwidth("MUTA");
-    outtextxy(x+option_width/2-lung_text/2,y+10,"MUTA");
+    outtextxy(x+option_width/2-lung_text/2,y+5,"MUTA");
     lung_text=textwidth("STERGE");
     outtextxy(x+option_width/2-lung_text/2,y+2*option_height/4,"STERGE");
     setfillstyle(SOLID_FILL,option_color);
     floodfill(x+10,y+10,BLACK);
-    line(x,y+option_height/2,x+option_width,y+option_height/2);
+    line(x,y+option_height/2,x+option_width,y+option_height/2);*/
 }
 
 void deseneaza_info()
 {
     int x1=info_x+10,y1=info_y+10;
     setcolor(BLUE);
+    setbkcolor(fundal);
     rectangle(info_x,info_y,info_x+info_width,info_y+info_height);
-    outtextxy(x1,y1,"Informatii");
+    outtextxy(x1,y1,"INFORMATII");
     line(info_x,info_y+30,info_x+info_width,info_y+30);
     //rectangle(info_x+20,info_y+50,info_x+100,)
 }
@@ -598,10 +677,21 @@ void desenare_buton(int left, int right, int culoare, char text[])
 {
     int width=right-left,height=50,lung_text=textwidth(text);
     setcolor(BLUE);
-    outtextxy(left+width/2-lung_text/2,height/2,text);
+    setbkcolor(culoare);
+    settextstyle(3,0,2);
+    setusercharsize(3,2,3,2);
+    outtextxy(left+width/2-lung_text/2,height/3,text);
     rectangle(left,0,right,48);
     setfillstyle(SOLID_FILL,culoare);
     floodfill(left+1,1,BLUE);
+    settextstyle(3,0,0);
+    setusercharsize(25,100,25,100);
+}
+
+void marcheaza_bloc(int i, int culoare=mark_color)
+{
+    setfillstyle(SOLID_FILL,culoare);
+    floodfill(a[i].x+a[i].width/2+raza,a[i].y+a[i].height-1,text_color);
 }
 
 void schimba_coord()
@@ -669,12 +759,83 @@ void verifica_zoom(int x, int y)
 
 void deseneaza_butoane_zoom()
 {
+    setbkcolor(fundal);
+    setcolor(GREEN);
+    outtextxy(minus_x-70,minus_y,"ZOOM");
     setcolor(BLACK);
     rectangle(minus_x,minus_y,minus_x+latura_zoom,minus_y+latura_zoom);
     line(minus_x+latura_zoom/10,minus_y+latura_zoom/2,minus_x+latura_zoom-latura_zoom/10,minus_y+latura_zoom/2);
     rectangle(plus_x,plus_y,plus_x+latura_zoom,plus_y+latura_zoom);
     line(plus_x+latura_zoom/2,plus_y+latura_zoom/10,plus_x+latura_zoom/2,plus_y+latura_zoom-latura_zoom/10);
     line(plus_x+latura_zoom/10,plus_y+latura_zoom/2,plus_x+latura_zoom-latura_zoom/10,plus_y+latura_zoom/2);
+}
+
+void sterge_butoane_viteza()
+{
+    setfillstyle(SOLID_FILL,fundal);
+    bar(minusV_x-5,minusV_y-5,plusV_x+30,plusV_y+30);
+}
+
+void deseneaza_butoane_viteza()
+{
+    setcolor(BLACK);
+    rectangle(minusV_x,minusV_y,minusV_x+latura_v,minusV_y+latura_v);
+    line(minusV_x+latura_v/10,minusV_y+latura_v/2,minusV_x+latura_v-latura_v/10,minusV_y+latura_v/2);
+    rectangle(plusV_x,plusV_y,plusV_x+latura_v,plusV_y+latura_v);
+    line(plusV_x+latura_v/2,plusV_y+latura_v/10,plusV_x+latura_v/2,plusV_y+latura_v-latura_v/10);
+    line(plusV_x+latura_v/10,plusV_y+latura_v/2,plusV_x+latura_v-latura_v/10,plusV_y+latura_v/2);
+
+    setcolor(GREEN);
+    setbkcolor(fundal);
+    outtextxy(minusV_x,minusV_y-2*latura_v,"VITEZA DE EXECUTIE");
+    setcolor(BLACK);
+    int nr=6,poz=viteza/200,latura=(plusV_x-minusV_x-latura_v)/7;
+    for(int i=1;i<=nr;i++)
+        {
+         if(i-1==viteza/200) {rectangle(minusV_x+i*latura+latura_v/2,minusV_y,minusV_x+i*latura+latura_v/2+latura_v,minusV_y+latura_v); continue ; }
+         line(minusV_x+latura_v+i*latura,minusV_y+5,minusV_x+latura_v+i*latura,minusV_y+latura_v-5);
+        }
+}
+
+void verifica_butoane_viteza(int x, int y)
+{
+    if(apartine_dreptungi(x,y,minusV_x,minusV_y,latura_v,latura_v) && viteza>0)
+        {viteza-=200;
+         sterge_butoane_viteza();
+         deseneaza_butoane_viteza();
+        }
+    if(apartine_dreptungi(x,y,plusV_x,plusV_y,latura_v,latura_v) && viteza<1000)
+        {viteza+=200;
+         sterge_butoane_viteza();
+         deseneaza_butoane_viteza();
+        }
+    if(y>=minusV_y && y<=minusV_y+latura_v && x>=minusV_x+latura_v && x<=plusV_x-latura_v)
+        {int latura=(plusV_x-minusV_x-latura_v)/7,nr=(x-minusV_x-2*latura_v)/latura;
+         viteza=nr*200;
+         sterge_butoane_viteza();
+         deseneaza_butoane_viteza();
+        }
+}
+
+void obtine_cod()
+{
+
+}
+
+void verifica_buton_cod(int x, int y)
+{
+    if(apartine_dreptungi(x,y,cod_x,cod_y,cod_width,cod_height))
+        obtine_cod();
+}
+
+void desenare_buton_cod()
+{
+    setcolor(BLACK);
+    setbkcolor(cod_color);
+    rectangle(cod_x,cod_y,cod_x+cod_width,cod_y+cod_height);
+    outtextxy(cod_x+10,cod_y+cod_height/3,"COD C/C++");
+    setfillstyle(SOLID_FILL,cod_color);
+    floodfill(cod_x+1,cod_y+1,BLACK);
 }
 
 void verifica_mutare_ecran()
@@ -697,32 +858,47 @@ void verifica_mutare_ecran()
 
 }
 
+void deseneaza_meniu()
+{
+    int width=getmaxwidth()/nr_butoane;
+    for(int i=0;i<nr_butoane;i++)
+        desenare_buton(i*width,(i+1)*width,culori_butoane[i],mesaje_butoane[i]);
+
+}
+
 void desenare_margine()
-{ for(int i=0;i<=5;i++)
+{
+  for(int i=0;i<=5;i++)
       desenare_bloc(i);
-  int width=getmaxwidth()/nr_butoane;
-  for(int i=0;i<nr_butoane;i++)
-      desenare_buton(i*width,(i+1)*width,culori_butoane[i],mesaje_butoane[i]);
+  deseneaza_meniu();
   deseneaza_butoane_zoom();
+  deseneaza_butoane_viteza();
+  desenare_buton_cod();
 
 }
 
 void init()
-{ int y=710,x=50;
+{
+  int y=710,x=50;
+  if(!continuare)
+  {
+  viteza=200;
   nr_blocuri=6;
   nr_blocuri_start=0;
   indice_zoom=4;
   raza=7;
   ecran_x=min_x_ecran;ecran_y=min_y_ecran;
-  setbkcolor(fundal);clearviewport();
-  deseneaza_info();
   a[0]={0,0,50,710,"START"};
   a[1]={1,0,200,710,"STOP"};
   a[2]={2,0,350,710,"INTRARE"};
   a[3]={3,0,500,710,"IESIRE"};
   a[4]={4,0,650,710,"DECIZIE"};
   a[5]={5,0,800,710,"CALCUL"};
+  }
+  continuare=1;
+  setbkcolor(fundal);clearviewport();
   desenare_margine();
+  deseneaza_info();
 }
 
 void sterge_info()
@@ -751,7 +927,8 @@ bool verifica_textbox(char text[])
 }*/
 
 bool apartine_left_right(int x, int y)
-{ int d=dist_left,nr;
+{
+  int d=dist_left,nr;
   if(apartine_dreptungi(x,y,left_x,left_y,latura_left,latura_left))
         { indice_info=max(indice_info-1,0);
           //cout<<indice_info<<' ';
@@ -769,7 +946,8 @@ bool apartine_left_right(int x, int y)
 }
 
 void deseneaza_butoane_left_right(int culoare, int nr)
-{ int d=dist_left;
+{
+  int d=dist_left;
   setcolor(BLACK);
   if(indice_info>0)  rectangle(left_x,left_y,left_x+latura_left,left_y+latura_left);
   if(indice_info<nr-1) rectangle(left_x+d,left_y,left_x+d+latura_left,left_y+latura_left);
@@ -787,8 +965,10 @@ void deseneaza_butoane_left_right(int culoare, int nr)
 }
 
 void deseneaza_text(char text[], int caz=0, char mesaj[]="")
-{ setcolor(BLACK);
-  if(caz==0)
+{
+  setcolor(BLACK);
+  setbkcolor(fundal);
+  if(caz==0 || caz==3)
         {textbox.p1.x=info_x+10;textbox.p2.x=info_x+300;
          textbox.p1.y=info_y+50;
         }
@@ -807,8 +987,12 @@ void deseneaza_text(char text[], int caz=0, char mesaj[]="")
      height*=2;
     }
     else   outtextxy(textbox.p1.x+10,textbox.p1.y,text);
-  if(caz==0)
-    {textbox.p2.y=textbox.p1.y+height;
+  if(caz==0 || caz==3)
+    {if(caz==3)
+     {setcolor(GREEN);
+     outtextxy(info_x+10,info_y+35,mesaj);
+     }
+     textbox.p2.y=textbox.p1.y+height;
      rectangle(textbox.p1.x,textbox.p1.y,textbox.p2.x,textbox.p2.y);
     }
     else {int culoare=GREEN,nr=Rezultat.size();
@@ -1073,7 +1257,7 @@ void trasareVertical(linie& l,linie* next) //traseaza o linie pe verticala, veri
         ocolireVertical(l,aux,px,v[i]); // ocoleste blocul v[i]
 
     if(len == 0) // daca nu exista bloc cu care linia se intersecteaza
-        line(l.p1.x,l.p1.y,l.p2.x,l.p2.y);
+        line(l.p1.x,max(colt_y,l.p1.y),l.p2.x,min(colt_y+inaltime,l.p2.y));
     else if(next != NULL && punctInterior(l,v[len])) // verificam daca i o linie care are punctul destinatie intr-un bloc
     {
         ocolireVerticalaDesteapta(aux,v[len],next,px,l.p2.y); // ocoleste destept acest obstacol (punctul se va afla pe acelasi y cu punctul in care ar fi trebuit sa fie, dar x ul este diferit in functie de linia urmatoare)
@@ -1395,17 +1579,18 @@ void deseneaza_legaturi()
 
 
 void deseneaza_schema()
-{ setcolor(BLUE);
+{
+  setcolor(BLUE);
   rectangle(0,colt_y,lungime,colt_y+inaltime);
   setfillstyle(SOLID_FILL,fundal);
   floodfill(500,100,BLUE);
   deseneaza_legaturi();
   /// nu se mai redeseneaza marginea daca liniile astea sunt comentate
-  setcolor(BLUE);
+  /*setcolor(BLUE);
   rectangle(0,colt_y,lungime,colt_y+inaltime);
   setfillstyle(SOLID_FILL,fundal);
   floodfill(801,711,BLUE);
-  desenare_margine();
+  desenare_margine();*/
   //
   for(int i=6;i<nr_blocuri;i++)
      if(a[i].ok)
@@ -1465,12 +1650,22 @@ void inapoi()
     clearviewport();
     ecrane[0] = 1;
     ecrane[1] = 0;
+    ecrane[2] = 0;
     ecranCurent = 0;
     ecran_schimbat=1;
+    nr_butoane=6;
+}
+
+void text_to_number(float &n, char* s)
+{
+    n=0;
+    for(int i=0;i<strlen(s);i++)
+        n=n*10+s[i]-'0';
 }
 
 void number_to_text(int n, char* s)
-{ int nr=0;
+{
+  int nr=0;
   do
   { s[nr++]='0'+(n%10);
     n/=10;
@@ -1521,10 +1716,18 @@ void afiseaza_erori()
         }
 }
 
-int variabile_iesire(char text[])
+bool verifica_text_cin(char text[])
 {
-  for(int i=0;i<strlen(text);i++)
-        if(text[i]>='a' && text[i]<='z')// && (i+1==strlen(text) || text[i+1]==',' || text[i+1]=='=') )
+    for(int i=0;i<strlen(text);i++)
+        if(text[i]<'0' || text[i]>'9') return false;
+    return true;
+}
+
+char variabile_iesire(char aux[])
+{
+    cout<<aux<<'\n';
+  for(int i=0;i<strlen(aux);i++)
+        if(aux[i]>='a' && aux[i]<='z' && (i+1==strlen(aux) || aux[i+1]==',' || aux[i+1]=='=') )
             return i;
   return -1;
 }
@@ -1556,8 +1759,9 @@ void afiseaza_rezultat()
      replace_var(rez,text1);
      deseneaza_text(text1,1,text);
     }
-
-  outtextxy(info_x+10,info_y+info_height+10,"Variabile");
+  setcolor(GREEN);
+  setbkcolor(fundal);
+  outtextxy(info_x+10,info_y+info_height+10,"VARIABILE");
   setcolor(BLACK);
   for(int j=0;j<26;j++)
   { char text[NMAX];
@@ -1571,7 +1775,8 @@ void afiseaza_rezultat()
 }
 
 void verifica_erori_desen()
-{ if(start_main<6) S.push_back({0,3});
+{
+  if(start_main<6) S.push_back({0,3});
   bool stop=0;
   for(int i=6;i<nr_blocuri;i++)
      if(a[i].tip!=0)
@@ -1589,7 +1794,7 @@ void verifica_erori_desen()
          {nr_total_leg=3;
           if(a[i].dr!=-1) nr_leg++;
          }
-         if(nr_total_leg!=nr_leg && nr_leg!=0) S.push_back({i,0});
+         if(nr_total_leg!=nr_leg && nr_leg!=0) S.push_back({i-5,0});
      }
   if(!stop) S.push_back({0,2});
   if(S.size()) eroare=1;
@@ -1933,19 +2138,48 @@ void genereaza_mesaj(string& cod,set<int>& vizitate,int nod)
 }
 
 void executa()
-{ eroare=rezult=0;//cout<<evalueazaExpresie("a=2+3");
+{
+  sterge_info();
+  eroare=rezult=0;//cout<<evalueazaExpresie("a, b");
   verifica_erori_desen();
   int i=start_main,rez;
   while(a[i].tip!=1 && !eroare)
-  { if(a[i].tip>1)
+  {  int i1=i;
+     marcheaza_bloc(i1);
+     delay(viteza);
+     if(strcmp(a[i].text,"")==0)
+     {S.push_back({i-5,1});
+      eroare=1;
+     }
+     else if(a[i].tip>1)
         rez=evalueazaExpresie(a[i].text);
      if(!eroare)
-            { if(a[i].tip==3)
-                {int poz=variabile_iesire(a[i].text);
-                 if(poz==-1) Rezultat.push_back({i,1,rez});
+            {
+             if(a[i].tip==3 || a[i].tip==2)
+                {char aux[NMAX];
+                 int nr=0;
+                 for(int j=0;j<=strlen(a[i].text);j++)
+                     if(a[i].text[j]!=' ') aux[nr++]=a[i].text[j];
+                 aux[nr]='\0';
+                 int poz=variabile_iesire(aux);//cout<<poz<<'\n';
+                 if(poz==-1 && a[i].tip==3) Rezultat.push_back({i-5,1,rez});
+                 nr=0;
                  while(poz!=-1)
-                          {Rezultat.push_back({i,0,rez,a[i].text[poz]});
-                           poz=variabile_iesire(a[i].text+poz+1);
+                          {nr+=poz+1;
+                           if(a[i].tip==3)
+                                Rezultat.push_back({i-5,0,variabile[aux[nr-1]-'a'],aux[nr-1]});
+                           else
+                           { deseneaza_text("",3,"Introduceti o valoare");
+                             strcpy(a[NMAX-9].text,"");
+                             citeste_text(NMAX-9);
+                             clearmouseclick(WM_LBUTTONDOWN);
+                             sterge_info();
+                             if(verifica_text_cin(a[NMAX-9].text))
+                                text_to_number(variabile[aux[nr-1]-'a'],a[NMAX-9].text);
+                             else eroare=1,S.push_back({0,4});
+                           }
+                           poz=variabile_iesire(aux+nr);
+                           cout<<poz<<' '<<nr<<'\n';
                           }
                 }
               if(a[i].st!=-1)  i=a[i].st;
@@ -1957,8 +2191,15 @@ void executa()
 
                  }
             }
+      marcheaza_bloc(i1,color);
+  }
+  if(a[i].tip==1)
+  {  marcheaza_bloc(i,mark_color);
+     delay(viteza);
+     marcheaza_bloc(i,color);
   }
   if(!eroare) rezult=1,event=0;
+  cout<<eroare<<' ';
     string cod;
     set<int> vizitate;
 
@@ -1966,6 +2207,7 @@ void executa()
         a[i].bucla = false;
 
     genereaza_mesaj(cod,vizitate,start_main);
+    if(rezult==1) eroare=0;
     cout<<'\n'<<'\n'<<cod;
 
 }
@@ -2026,6 +2268,65 @@ void redo()
     Undo(1);
 }
 
+void afiseaza_text_ajutor()
+{
+    int i=NMAX-1;
+    continuare=0;
+    init();
+    a[i]={4,1,600,300,"a=(i+"};
+    a[i].st=i;
+    trasare_legatura(i,i,4,0);
+    desenare_bloc(i);
+    afiseaza_optiuni(a[i].x+a[i].width,a[i].y);
+    deseneaza_text(a[i].text);
+    setcolor(culoare_text);
+    line(a[i].x+a[i].width/2-5,a[i].y,a[i].x-100,a[i].y);
+    line(a[i].x,a[i].y+a[i].height+5,a[i].x+a[i].width/2,a[i].y+100);
+    line(a[i].x+a[i].width,a[i].y+a[i].height+5,a[i].x+a[i].width/2,a[i].y+100);
+    settextstyle(3,0,2);
+    setusercharsize(3,2,3,2);
+    outtextxy(20,100,"Puteti folosi sagetile pentru a muta schema");
+    outtextxy(info_x-430,info_y+25,"Dati click pe chenar, introduceti un text si apasati");
+    outtextxy(info_x-450,info_y+45,"tasta enter pentru a introduce textul in blocul selectat");
+    outtextxy(100,200,"Dati click pe doua noduri pentru a le uni printr-o legatura, un nod din partea superioara se poate uni doar cu un nod");
+    outtextxy(80,220,"din partea inferioara si invers. De asemenea, un nod superior poate fi legat de mai multe ori, iar unul inferior doar o data");
+    outtextxy(a[i].x+2*a[i].width+70,a[i].y,"Selectati un bloc plasat si dati click");
+    outtextxy(a[i].x+2*a[i].width+50,a[i].y+20,"dreapta pentru a vedea optiunile");
+    outtextxy(a[i].x-200,a[i].y-10,"Nod superior");
+    outtextxy(a[i].x,a[i].y+100,"Noduri inferioare");
+    outtextxy(50,530,"Selectati si plasati un bloc pentru a-l adauga in schema (Click dreapta pentru a anula)");
+    outtextxy(70,550,"Blocurile Start si Stop nu pot fi modificate");
+    outtextxy(70,570,"Blocul decizie va evalua expresia si va returna o valoare de adevar, daca expresia este ");
+    outtextxy(50,590,"adevarata, executia va continua prin legatura din stanga, altfel va continua prin dreapta");
+    outtextxy(70,610,"Blocul intrare poate primi doar variabile separate prin virgula");
+    outtextxy(70,630,"Blocul iesire poate primi variabile sau expresii separate prin virgula si va afisa rezultatul in zona informatii");
+    outtextxy(70,650,"Blocul calcul poate primi variabile sau expresii separate prin virgula");
+    outtextxy(cod_x+20,cod_y-50,"Dati click pentru a ");
+    outtextxy(cod_x,cod_y-30,"obtine codul c/c++");
+    settextstyle(3,0,0);
+    setusercharsize(25,100,25,100);
+}
+
+void help()
+{
+    cleardevice();
+    setbkcolor(fundal);clearviewport();
+    nr_butoane=1;
+    int aux=nr_blocuri;
+    afiseaza_text_ajutor();
+    while(1)
+    { delay(100);
+      if(ismouseclick(WM_LBUTTONDOWN))
+      { int y=mousey();
+        clearmouseclick(WM_LBUTTONDOWN);
+        if(y<=50) break;
+      }
+    }
+    nr_butoane=6;
+    nr_blocuri=aux;
+    continuare=1;
+    ecran1();
+}
 
 void buton(int i)
 {
@@ -2049,6 +2350,10 @@ void buton(int i)
         }
     case 4:
         {redo();
+         break ;
+        }
+    case 5:
+        {help();
          break ;
         }
     }
@@ -2174,8 +2479,187 @@ void click_stanga() /// click stanga pentru a plasa blocuri si pentru a adauga b
     }
     else selectat=verifica_toate_blocurile(x,y);
     verifica_zoom(x,y);
+    verifica_butoane_viteza(x,y);
+    verifica_buton_cod(x,y);
 }
 
+void seteaza_culori()
+{
+    fundal=culori[indice_culori[0]];
+    color=culori[indice_culori[1]]-1;
+    nod_color=culori[indice_culori[2]]-2;
+    line_color=culori[indice_culori[3]]-3;
+    text_color=culori[indice_culori[4]]-4;
+    mark_color=culori[indice_culori[5]]-5;
+    setbkcolor(fundal);
+    clearviewport();
+}
+
+void deseneaza_triunghi(int x1, int y1, int x2, int y2, int x3, int y3)
+{
+    setcolor(BLACK);
+    line(x1,y1,x2,y2);
+    line(x3,y3,x2,y2);
+    line(x1,y1,x3,y3);
+    setfillstyle(SOLID_FILL,LIGHTGRAY);
+    floodfill(x1+(x3-x1)/2,y1+(y2-y1)/2,BLACK);
+
+}
+
+void desenare_optiuni_setari()
+{
+    setbkcolor(fundal);
+    for(int i=0;i<nr_setari;i++)
+        { setcolor(culoare_text);
+          outtextxy(50,100+i*100,mesaje_setari[i]);
+          deseneaza_triunghi(set_nod_x-25,100+i*100,set_nod_x-25,120+i*100,set_nod_x-35,110+i*100);
+          deseneaza_triunghi(set_nod_x+25,100+i*100,set_nod_x+25,120+i*100,set_nod_x+35,110+i*100);
+        }
+    setcolor(culoare_text);
+    outtextxy(50,100+(nr_setari-1)*100+20,mesaje_setari[nr_setari]);
+    for(int i=0;i<nr_setari;i++)
+        { setfillstyle(SOLID_FILL,culori[indice_culori[i]]-i);
+          fillellipse(set_nod_x,110+i*100,set_raza,set_raza);
+        }
+}
+
+void incarca_preview()
+{
+    int i=NMAX-8;
+    a[i]={0,1,970,100,"TEXT"};
+    a[i].st=i+1;
+    a[i+1].ant.push_back(i);
+    a[i+1]={2,1,970,200,"TEXT"};
+    a[i+1].st=i+2;
+    a[i+2].ant.push_back(i+1);
+    a[i+2]={4,1,870,300,"TEXT"};
+    a[i+2].st=i+3;
+    a[i+2].dr=i+4;
+    a[i+3].ant.push_back(i+2);
+    a[i+4].ant.push_back(i+2);
+    a[i+3]={1,1,720,400,"TEXT"};
+    a[i+4]={5,1,1070,400,"TEXT"};
+    a[i+4].st=i+5;
+    a[i+5].ant.push_back(i+4);
+    a[i+5]={3,1,1170,500,"TEXT"};
+    a[i+5].st=i+6;
+    a[i+6].ant.push_back(i+5);
+    a[i+6]={1,1,1070,600,"TEXT"};
+}
+
+
+void desenare_setari()
+{
+    seteaza_culori();
+    setcolor(culoare_text);
+    settextstyle(3,0,2);
+    setusercharsize(3,2,3,2);
+    outtextxy(700,100,"Preview");
+    settextstyle(3,0,0);
+    setusercharsize(25,100,25,100);
+    for(int i=NMAX-8;i<=NMAX-2;i++)
+            {
+             if(a[i].st !=-1)
+                 trasare_legatura(i,a[i].st,a[i].tip,0);
+             if(a[i].dr!=-1)
+                 trasare_legatura(i,a[i].dr,a[i].tip,1);
+             desenare_bloc(i);
+            }
+    marcheaza_bloc(NMAX-5);
+    deseneaza_meniu();
+    desenare_optiuni_setari();
+}
+
+void init_setari()
+{
+    cleardevice();
+    setbkcolor(fundal);clearviewport();
+    nr_butoane=1;
+    incarca_preview();
+    desenare_setari();
+
+
+}
+
+bool verifica_schimbari_setari(int x, int y)
+{
+    if( (x>=set_nod_x-35 && x<=set_nod_x-25) || (x>=set_nod_x+25 && x<=set_nod_x+35) )
+        for(int i=0;i<nr_setari;i++)
+            if(y>=(100+i*100) && y<=(120+i*100) )
+            { if(x>set_nod_x) indice_culori[i]=min(indice_culori[i]+1,nr_culori);
+                 else indice_culori[i]=max(indice_culori[i]-1,0);
+              return true ;
+            }
+    return false;
+}
+
+void click_stanga_setari()
+{
+    int x=mousex(),y=mousey();
+    clearmouseclick(WM_LBUTTONDOWN);
+    bara_meniu(x,y);
+    if(verifica_schimbari_setari(x,y)) desenare_setari();
+
+}
+
+void option1()
+{
+
+}
+
+void option2()
+{
+
+}
+
+void option3()
+{
+
+}
+
+void option4()
+{
+
+}
+
+void verifica_optiuni_salvate(int i)
+{
+    int a=mousex(),b=mousey();
+    clearmouseclick(WM_LBUTTONDOWN);
+    int x=i*100,y=i*100;
+    int nr=(b-y)/option_height;//cout<<nr<<' ';
+    if(a<x || a>x+option_width || b<y || b>y+4*option_height) return ;
+    if(nr==0) option1();
+    if(nr==1) option2();
+    if(nr==2) option3();
+    if(nr==3) option4();
+}
+
+void click_stanga_salvate()
+{
+    int x=mousex(),y=mousey();
+    clearmouseclick(WM_LBUTTONDOWN);
+    bara_meniu(x,y);
+    event=1;
+
+
+}
+
+void init_salvate()
+{
+    cleardevice();
+    setbkcolor(fundal);clearviewport();
+    nr_butoane=1;
+    deseneaza_meniu();
+
+}
+
+void desenare_salvate()
+{
+    cleardevice();
+    setbkcolor(fundal);clearviewport();
+    deseneaza_meniu();
+}
 
 //Determina coordonatele unei optiuni in functie de marimile ecranului si proportiile alese (constantele de la inceputul programului)
 dreptunghi coordonateOptiune(const int& width,const int& height, const int& componenta,const int& nrComponente)
@@ -2231,7 +2715,7 @@ void creeazaOptiune(const int& width,const int& height,const int& componenta,con
     setcolor(BLACK);
     //Afisam optiunea cu mesajul curent
     rectangle(optiuni[componenta].drept.p1.x,optiuni[componenta].drept.p1.y,optiuni[componenta].drept.p2.x,optiuni[componenta].drept.p2.y);
-    setcolor(text_color);
+    setcolor(culoare_text);
     //Afisam mesajul curent in mod centrat in dreptunghiul corespunzator
     outtextxy(optiuni[componenta].drept.midx - optiuni[componenta].widthText / 2, optiuni[componenta].drept.midy - optiuni[componenta].heightText / 2, mesaj);
 
@@ -2261,10 +2745,24 @@ void ecran0()
     setbkcolor(fundal);
     clearviewport();
     //Campurile meniului, se va specifica lungimea si inaltimea ecranului, a cata optiune este, numarul de optiuni si mesajul dorit
-    creeazaOptiune(widthEcran,heightEcran,1,4,"CREEAZA SCHEMA");
-    creeazaOptiune(widthEcran,heightEcran,2,4, "SALVATE");
-    creeazaOptiune(widthEcran,heightEcran,3,4, "SCRIE COD");
-    creeazaOptiune(widthEcran,heightEcran,4,4, "IESIRE");
+    if(continuare)
+    {
+        creeazaOptiune(widthEcran,heightEcran,1,6,"CREEAZA SCHEMA");
+        creeazaOptiune(widthEcran,heightEcran,2,6,"CONTINUA");
+        creeazaOptiune(widthEcran,heightEcran,3,6, "SALVATE");
+        creeazaOptiune(widthEcran,heightEcran,4,6, "SCRIE COD");
+        creeazaOptiune(widthEcran,heightEcran,5,6, "SETARI");
+        creeazaOptiune(widthEcran,heightEcran,6,6, "IESIRE");
+    }
+    else
+    {
+        creeazaOptiune(widthEcran,heightEcran,1,5,"CREEAZA SCHEMA");
+        creeazaOptiune(widthEcran,heightEcran,2,5, "SALVATE");
+        creeazaOptiune(widthEcran,heightEcran,3,5, "SCRIE COD");
+        creeazaOptiune(widthEcran,heightEcran,4,5, "SETARI");
+        creeazaOptiune(widthEcran,heightEcran,5,5, "IESIRE");
+    }
+
     while(!ecran_schimbat)  /// cand se apasa pe o optiune de meniu, ecran_schimbat devine 1, se opreste loop-ul asta si se revine in loop-ul din main
     {
         if(ismouseclick(WM_LBUTTONDOWN))
@@ -2278,8 +2776,7 @@ void ecran0()
                     ecrane[0] = 0;
                     ecrane[i] = 1;
                     ecranCurent = i;
-                    //ok = 1;
-                    ecran_schimbat=1;
+                    ecran_schimbat = 1;
                 }
             }
         }
@@ -2296,6 +2793,7 @@ void ecran1()
         if(kbhit()) verifica_mutare_ecran();
         if(event) deseneaza_schema(),event=0;
 
+        if(selectat>5) sterge_info();
         if(selectat<=5 && !eroare && !rezult) sterge_info();
 
         if(options && ismouseclick(WM_LBUTTONDOWN))
@@ -2327,12 +2825,49 @@ void ecran1()
 
 void ecran2()
 {
-    outtextxy(0,0, "Ecran2");
+//    listFile();
+   init_salvate();
+   int selectat=-1;
+   bool event=0;
+    while(!ecran_schimbat)
+   {
+    if(event) desenare_salvate(),event=0;
+    if(selectat!=-1 && ismouseclick(WM_LBUTTONDOWN))
+        {verifica_optiuni_salvate(selectat);
+         event=1;
+         selectat=-1;
+        }
+    if(ismouseclick(WM_LBUTTONDOWN))  click_stanga_salvate();
+    if(ismouseclick(WM_RBUTTONDOWN))
+   {
+       selectat=1;
+       clearmouseclick(WM_RBUTTONDOWN);
+       desenare_optiuni(selectat*100,selectat*100,4,"Option1","Option2","Option3","Option4");
+   }
+
+   }
+
+
 }
 
 void ecran3()
 {
-    outtextxy(0,0, "Ecran3");
+    cleardevice();
+}
+
+void ecran4()
+{
+   init_setari();
+   while(!ecran_schimbat)
+   {
+    if(ismouseclick(WM_LBUTTONDOWN))  click_stanga_setari();
+
+   }
+
+}
+void ecran5()
+{
+    cleardevice();
 }
 
 int main()
@@ -2343,26 +2878,57 @@ int main()
     // int page = 1;  // Initializarea animatiei
 
     //initwindow(1500,768);
-    initwindow(getmaxwidth(),getmaxheight()-25);///1530 810
+    initwindow(getmaxwidth(),getmaxheight()-25,"InterSchem");///1530 810
 
     // registermousehandler(WM_LBUTTONUP,click_handler); //Click Handlerul
 
     do
-    {
+    {   settextstyle(3,0,0);
+        setusercharsize(25,100,25,100);
         if(ecran_schimbat)
         {
             ecran_schimbat=0;
             delay(100);
             if(ecrane[0])
                 ecran0();
-            else if(ecrane[1])
-                ecran1();
-            else if(ecrane[2]) ;
-            //ecran2();
-            else if(ecrane[3]) ;
-            //ecran3();
-            else if(ecrane[4])
-                exit(1);
+            else if(!continuare)
+            {
+               /* for(int i=0;i<6;i++)
+                    cout<<ecrane[i]<<" ";
+                cout<<endl;*/
+
+                if(ecrane[1])
+                    ecran1();
+                else if(ecrane[2] )
+                    ecran2();
+                else if(ecrane[3])
+                    ecran3();
+                else if(ecrane[4])
+                    ecran4();
+                else if(ecrane[5])
+                    exit(1);
+            }
+            else
+            {
+               /* for(int i=0;i<=6;i++)
+                    cout<<ecrane[i]<<" ";
+                cout<<endl;*/
+
+                if(ecrane[1]) // butonul continuare
+                    {continuare=0;
+                     ecran1();
+                    }
+                else if(ecrane[2])
+                    ecran1();
+                else if(ecrane[3])
+                    ecran2();
+                else if(ecrane[4])
+                    ecran3();
+                else if(ecrane[5])
+                    ecran4();
+                else if(ecrane[6])
+                    exit(1);
+            }
         }
 
         //page = 1-page;
@@ -2375,4 +2941,3 @@ int main()
 
     return 0;
 }
-
