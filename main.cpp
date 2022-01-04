@@ -1257,7 +1257,8 @@ void trasareVertical(linie& l,linie* next) //traseaza o linie pe verticala, veri
         ocolireVertical(l,aux,px,v[i]); // ocoleste blocul v[i]
 
     if(len == 0) // daca nu exista bloc cu care linia se intersecteaza
-        line(l.p1.x,max(colt_y,l.p1.y),l.p2.x,min(colt_y+inaltime,l.p2.y));
+        line(l.p1.x,l.p1.y,l.p2.x,l.p2.y);
+        ///line(l.p1.x,max(colt_y,l.p1.y),l.p2.x,min(colt_y+inaltime,l.p2.y));
     else if(next != NULL && punctInterior(l,v[len])) // verificam daca i o linie care are punctul destinatie intr-un bloc
     {
         ocolireVerticalaDesteapta(aux,v[len],next,px,l.p2.y); // ocoleste destept acest obstacol (punctul se va afla pe acelasi y cu punctul in care ar fi trebuit sa fie, dar x ul este diferit in functie de linia urmatoare)
@@ -1396,8 +1397,21 @@ void trasareOrizontal(linie& l,linie* next)
     l.p1 = l.p2;
 }
 
+void aducere_in_plan(punct &pStart, punct &pStop)
+{
+    pStart.x=max(0,pStart.x);
+    pStart.x=min(lungime,pStart.x);
+    pStop.x=max(0,pStop.x);
+    pStop.x=min(lungime,pStop.x);
+    pStart.y=max(colt_y,pStart.y);
+    pStart.y=min(colt_y+inaltime,pStart.y);
+    pStop.y=max(colt_y,pStop.y);
+    pStop.y=min(colt_y+inaltime,pStop.y);
+}
+
 void trasare_legatura(int nod1,int nod2,int tip,int dr)
 {
+    blocuri n1=a[nod1],n2=a[nod2];
     punct pStart,pStop;  // punctele de inceput si final
     setcolor(line_color);
     linie l[5],aux;      // legatura este impartita in mai multe linii orizontale/verticale
@@ -1425,6 +1439,8 @@ void trasare_legatura(int nod1,int nod2,int tip,int dr)
     // cx1,cx2 reprezinta segmentul aflat la baza nodului sursa, iar cy1,cy2 reprezinta segmentul aflat la baza nodului destinatie
     int cx1 = a[nod1].x, cx2 = a[nod1].x + a[nod1].width;
     int cy1 = a[nod2].x, cy2 = a[nod2].x + a[nod2].width;
+
+    aducere_in_plan(pStart,pStop);
 
     if(pStart.y <= pStop.y) // daca blocul destinatie se afla sub blocul sursa (legatura merge in jos)
     {
@@ -1562,12 +1578,14 @@ void trasare_legatura(int nod1,int nod2,int tip,int dr)
 
         trasareVertical(aux,NULL);
     }
+  a[nod1]=n1;
+  a[nod2]=n2;
 }
 
 void deseneaza_legaturi()
 {
     for(int i=6; i<nr_blocuri; i++) // parcurgem toate blocurile care nu se afla in meniul de jos
-       // if(a[i].ok)
+        //if(a[i].ok)
         {
             if(a[i].st !=-1)// && a[a[i].st].ok)
                 trasare_legatura(i,a[i].st,a[i].tip,0); // legatura stanga
@@ -1649,8 +1667,7 @@ void inapoi()
     setbkcolor(BLACK);
     clearviewport();
     ecrane[0] = 1;
-    ecrane[1] = 0;
-    ecrane[2] = 0;
+    ecrane[1] = ecrane[2] = ecrane[3] = ecrane[4] =0;
     ecranCurent = 0;
     ecran_schimbat=1;
     nr_butoane=6;
@@ -2232,7 +2249,7 @@ void Undo(int Redo=0)
           }
         case 2:
           { sterge_legatura(undo[j].bloc1,undo[j].bloc2,undo[j].dreapta);
-            if(undo[j].leg)  adauga_legatura(undo[j-1].bloc1,undo[j-1].bloc2,undo[j-1].dreapta);
+            if(undo[j].leg) cout<<undo[j-1].bloc1<<' '<<undo[j-1].bloc2<<'\n', adauga_legatura(undo[j-1].bloc1,undo[j-1].bloc2,undo[j-1].dreapta);
               break;
           }
         case 3:
@@ -2290,8 +2307,8 @@ void afiseaza_text_ajutor()
     outtextxy(info_x-450,info_y+45,"tasta enter pentru a introduce textul in blocul selectat");
     outtextxy(100,200,"Dati click pe doua noduri pentru a le uni printr-o legatura, un nod din partea superioara se poate uni doar cu un nod");
     outtextxy(80,220,"din partea inferioara si invers. De asemenea, un nod superior poate fi legat de mai multe ori, iar unul inferior doar o data");
-    outtextxy(a[i].x+2*a[i].width+70,a[i].y,"Selectati un bloc plasat si dati click");
-    outtextxy(a[i].x+2*a[i].width+50,a[i].y+20,"dreapta pentru a vedea optiunile");
+    outtextxy(a[i].x+2*a[i].width+90,a[i].y,"Selectati un bloc plasat si dati click");
+    outtextxy(a[i].x+2*a[i].width+70,a[i].y+20,"dreapta pentru a vedea optiunile");
     outtextxy(a[i].x-200,a[i].y-10,"Nod superior");
     outtextxy(a[i].x,a[i].y+100,"Noduri inferioare");
     outtextxy(50,530,"Selectati si plasati un bloc pentru a-l adauga in schema (Click dreapta pentru a anula)");
