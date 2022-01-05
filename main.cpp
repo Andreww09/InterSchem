@@ -83,7 +83,7 @@ int ecranCurent; //Ecranul deschis in acest moment
 int nr_blocuri=6,bloc_nou=-1,selectat=-1,raza=7,dist_leg=distanta_max_leg,distanta_intre_blocuri=20;
 bool event=1,options=0,ecran_schimbat=1,rezult;
 int continuare = 0;
-int nr_blocuri_start=0,start_main=0;
+int start_main=0;
 int nod_dest=-1,nod_st=-1,nod_dr=-1;
 int culori_butoane[6]= {COLOR(249,5,5),COLOR(250,255,77),COLOR(95,255,77),LIGHTBLUE,COLOR(46,255,193),COLOR(46,165,255)},nr_butoane=6;
 int zoom_ratio=5,indice_zoom=4; /// zoom_ratio=5 va insemna 1/5 adica 20%
@@ -596,7 +596,6 @@ void adauga_undo()
 void adauga(int i, int k, blocuri y)
 {
     list<int>::iterator it;
-    if(y.tip==0) nr_blocuri_start++;
     if(start_main<6) start_main=i;
     for(int j=6; j<nr_blocuri; j++)
     {
@@ -642,7 +641,6 @@ void sterge(int i, int ind=-1)
         if(a[*it1].tip==4 && a[*it1].dr==k) undo[ind].viz[*it1]=1;
 
     list<int>::iterator it;
-    if(a[i].tip==0) nr_blocuri_start--;
     if(i==start_main) start_main=0;
     for(it=a[i].ant.begin(); it!=a[i].ant.end(); it++)
     {
@@ -1008,7 +1006,7 @@ void init()
     {
         viteza=200;
         nr_blocuri=6;
-        nr_blocuri_start=0;
+        start_main=0;
         indice_zoom=4;
         raza=7;
         fisier_curent=-1;
@@ -2456,7 +2454,7 @@ void genereaza_mesaj(string& cod,set<int>& vizitate,int nod)
 void executa()
 {
     sterge_info();
-    eroare=rezult=0;//cout<<evalueazaExpresie("a, b");
+    eroare=rezult=0;//cout<<'\n'<<"Q"<<evalueazaExpresie("1!=2")<<"Q"<<'\n';
     verifica_erori_desen();
     int i=start_main,rez;
     while(a[i].tip!=1 && !eroare)
@@ -2777,7 +2775,7 @@ void click_stanga() /// click stanga pentru a plasa blocuri si pentru a adauga b
                 x1=((x+ecran_x)*zoom_ratio)/(indice_zoom-4+zoom_ratio);
                 y1=((y+ecran_y-colt_y)*zoom_ratio)/(indice_zoom-4+zoom_ratio);
             }
-            if(bloc_nou==0 && start_main==0)
+            if(bloc_nou==0)
             {
                 adauga_undo();
                 undo.push_back({1,nr_blocuri});
@@ -2793,7 +2791,6 @@ void click_stanga() /// click stanga pentru a plasa blocuri si pentru a adauga b
                 a[nr_blocuri]= {bloc_nou,1,x,y};
                 a[nr_blocuri].x1=x1;
                 a[nr_blocuri++].y1=y1;
-                if(bloc_nou==0) nr_blocuri_start++;
             }
             else
             {
