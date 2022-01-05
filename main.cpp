@@ -103,12 +103,15 @@ char mesaje_setari[9][NMAX]= {"CULOARE FUNDAL","CULOARE BLOCURI","CULOARE NODURI
 int culori[20]= {0x330033,0xFFFFFF,0xF00000,0xFF8000,0xFFFF33,0x66FFB2,0x009900,0x33FFFF,0x99FF99,COLOR(76,0,153),0x6666FF,0x0080FF,0x3333FF,0x7F00FF,COLOR(178,103,252),COLOR(153,51,255)};
 int fundal=culori[1],text_color=culori[0],color=culori[5],nod_color=culori[6]-2,option_color=culori[5],line_color=culori[12],mark_color=COLOR(76,0,153),limbaj=0;
 int indice_culori[8]= {1,5,6,12,0,9,0};
-string fisiere[20];
-int nr_fisiere = 7;
+char fisiere[20][NMAX];
+int fisier_curent=-1,nr_fisiere = 0;
 int nr_fisier[20];
 
 void zoom_bloc(int,int);
 void ecran1();
+void schimba_coord();
+void refacere_coord();
+void zoom_bloc();
 
 struct punct
 {
@@ -200,7 +203,7 @@ struct schimbari
     int tip;
     int bloc1,bloc2,x1,y1,x2,y2;
     bool dreapta;
-    bool leg=0;
+    int leg=0;
     char text1[NMAX],text2[NMAX];
     blocuri x;
     vector<bool> viz;
@@ -221,7 +224,7 @@ struct schimbari
 vector<schimbari> undo;
 
 
-void listFile(string v[],int& n)
+void listFile(char v[][NMAX],int& n)
 {
     DIR *pDIR;
     struct dirent *entry;
@@ -232,7 +235,7 @@ void listFile(string v[],int& n)
         while(entry = readdir(pDIR))
         {
             if( strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0 )
-                v[++n] = entry->d_name;
+                strcpy(v[++n], entry->d_name);
         }
         closedir(pDIR);
     }
@@ -607,7 +610,10 @@ void adauga(int i, int k, blocuri y)
     nr_blocuri++;
     for(int j=nr_blocuri; j>i; j--)
         a[j]=a[j-1];
+    refacere_coord();
     a[i]=y;
+    zoom_bloc(indice_zoom-4,i);
+    schimba_coord();
     if(a[i].st!=-1)  a[a[i].st].ant.push_back(i);
     if(a[i].tip==4 && a[i].dr!=-1)  a[a[i].dr].ant.push_back(i);
     for(it=a[i].ant.begin(); it!=a[i].ant.end(); it++)
@@ -626,7 +632,9 @@ void sterge(int i, int ind=-1)
         undo.push_back({6,i});
         ind=undo.size()-1;
     }
+    refacere_coord();
     undo[ind].x=a[i];
+    schimba_coord();
     int k=undo[ind].bloc1;
     list<int>::iterator it1;
     undo[ind].viz.assign(nr_blocuri,0);
@@ -766,7 +774,7 @@ void deseneaza_info()
     int x1=info_x+10,y1=info_y+10;
     setcolor(BLUE);
     setbkcolor(fundal);
-    rectangle(info_x,info_y,info_x+info_width,info_y+info_height);
+    rectangle(info_x,info_y-10,info_x+info_width,info_y+info_height);
     outtextxy(x1,y1,"INFORMATII");
     line(info_x,info_y+30,info_x+info_width,info_y+30);
     //rectangle(info_x+20,info_y+50,info_x+100,)
@@ -780,7 +788,7 @@ void desenare_buton(int left, int right, int culoare, char text[])
     settextstyle(3,0,2);
     setusercharsize(3,2,3,2);
     outtextxy(left+width/2-lung_text/2,height/3,text);
-    rectangle(left,0,right,48);
+    rectangle(left,0,right,40);
     setfillstyle(SOLID_FILL,culoare);
     floodfill(left+1,1,BLUE);
     settextstyle(3,0,0);
@@ -983,6 +991,16 @@ void desenare_margine()
 
 }
 
+void incarca_blocuri()
+{
+        a[0]= {0,0,50,710,"START"};
+        a[1]= {1,0,200,710,"STOP"};
+        a[2]= {2,0,350,710,"INTRARE"};
+        a[3]= {3,0,500,710,"IESIRE"};
+        a[4]= {4,0,650,710,"DECIZIE"};
+        a[5]= {5,0,800,710,"CALCUL"};
+}
+
 void init()
 {
     int y=710,x=50;
@@ -993,14 +1011,9 @@ void init()
         nr_blocuri_start=0;
         indice_zoom=4;
         raza=7;
+        fisier_curent=-1;
         ecran_x=min_x_ecran;
         ecran_y=min_y_ecran;
-        a[0]= {0,0,50,710,"START"};
-        a[1]= {1,0,200,710,"STOP"};
-        a[2]= {2,0,350,710,"INTRARE"};
-        a[3]= {3,0,500,710,"IESIRE"};
-        a[4]= {4,0,650,710,"DECIZIE"};
-        a[5]= {5,0,800,710,"CALCUL"};
     }
     continuare=1;
     setbkcolor(fundal);
@@ -1796,7 +1809,7 @@ void deseneaza_legaturi()
 void deseneaza_schema()
 {
     setcolor(BLUE);
-    rectangle(0,colt_y,lungime,colt_y+inaltime);
+    rectangle(0,colt_y-10,lungime,colt_y+inaltime);
     setfillstyle(SOLID_FILL,fundal);
     floodfill(500,100,BLUE);
     deseneaza_legaturi();
@@ -1883,12 +1896,15 @@ void text_to_number(float &n, char* s)
 void number_to_text(int n, char* s)
 {
     int nr=0;
+    bool negativ=0;
+    if(n<0) negativ=1,n*=-1;
     do
     {
         s[nr++]='0'+(n%10);
         n/=10;
     }
     while(n);
+    if(negativ) s[nr++]='-';
     s[nr]='\0';
     for(int i=0; i<nr/2; i++)
     {
@@ -1954,6 +1970,12 @@ char variabile_iesire(char aux[])
         if(aux[i]>='a' && aux[i]<='z' && (i+1==strlen(aux) || aux[i+1]==',' || aux[i+1]=='=') )
             return i;
     return -1;
+}
+
+void sterge_variabile()
+{
+    setcolor(fundal);
+    bar(info_x+10,info_y+info_height+10,info_x+10+400,info_y+info_height+10+300);
 }
 
 void afiseaza_rezultat()
@@ -2032,27 +2054,38 @@ void verifica_erori_desen()
     if(S.size()) eroare=1;
 }
 
-void salvare()
+void salvare(int numar=fisier_curent)
 {
-    char folder[25] = "salvate/schema";
-    int numar,cifre,i;
-    numar = nextFileName(cifre);
+    char folder[NMAX] = "salvate/schema";
+    int cifre=1,i;
+    //numar = nextFileName(cifre);
+    if(numar!=-1)
+        {
+            strcpy(folder+8,fisiere[numar]);
+            i=strlen(folder);
+        }
+    else
+    {
+    numar=nr_fisiere+1;
+    nr_fisiere++;
+    fisier_curent=nr_fisiere;
+
     int aux = pow(10,cifre-1);
 
     for(i=14; cifre != 0; i++,cifre--)
-    {
-        folder[i] = '0' + numar / aux;
-        numar = numar % aux;
-        aux /= 10;
-    }
-
+        {
+            folder[i] = '0' + numar / aux;
+            numar = numar % aux;
+            aux /= 10;
+        }
     folder[i] = '.';
     folder[i+1] = 't';
     folder[i+2] = 'x';
     folder[i+3] = 't';
     folder[i+4] = '\0';
+    }
 
-   // cout<<folder<<endl;
+    cout<<nr_fisiere<<' '<<folder<<endl;
 
 
     FILE* fptr = fopen(folder,"w");
@@ -2467,19 +2500,26 @@ void executa()
                         else eroare=1,S.push_back({0,4});
                     }
                     poz=variabile_iesire(aux+nr);
-                    cout<<poz<<' '<<nr<<'\n';
+                    //cout<<poz<<' '<<nr<<'\n';
                 }
             }
-            if(a[i].st!=-1)  i=a[i].st;
+            if(a[i].st!=-1)
+                {
+                    if(rez)
+                        i=a[i].st;
+                }
             else eroare=1;
             if(a[i].tip==4)
             {
                 if(a[i].dr!=-1)
-                    i=a[i].dr;
+                    {
+                        if(!rez) i=a[i].dr;
+                    }
                 else eroare=1;
 
             }
         }
+        ///else S.push_back({i-5,eroare});
         marcheaza_bloc(i1,color);
     }
     if(a[i].tip==1)
@@ -2526,7 +2566,11 @@ void Undo(int Redo=0)
         case 2:
         {
             sterge_legatura(undo[j].bloc1,undo[j].bloc2,undo[j].dreapta);
-            if(undo[j].leg) cout<<undo[j-1].bloc1<<' '<<undo[j-1].bloc2<<'\n', adauga_legatura(undo[j-1].bloc1,undo[j-1].bloc2,undo[j-1].dreapta);
+            if(undo[j].leg)
+                {//cout<<"Q"<<undo[j].leg<<' '<<undo[j].bloc2<<"Q"<<'\n';
+                 if(undo[j].leg<0) adauga_legatura(undo[j].bloc1,-undo[j].leg,1);
+                 else adauga_legatura(undo[j].bloc1,undo[j].leg,0);
+                }
             break;
         }
         case 3:
@@ -2541,7 +2585,11 @@ void Undo(int Redo=0)
         }
         case 5:
         {
-            if(undo[j].leg) sterge_legatura(undo[j-1].bloc1,undo[j-1].bloc2,undo[j-1].dreapta);
+            if(undo[j].leg)
+                {//cout<<"QQ"<<undo[j].leg<<' '<<undo[j].bloc2<<"QQ"<<'\n';
+                 if(undo[j].leg<0) sterge_legatura(undo[j].bloc1,-undo[j].leg,1);
+                 else sterge_legatura(undo[j].bloc1,undo[j].leg,0);
+                }
             adauga_legatura(undo[j].bloc1,undo[j].bloc2,undo[j].dreapta);
             break;
         }
@@ -2770,7 +2818,14 @@ void click_stanga() /// click stanga pentru a plasa blocuri si pentru a adauga b
             {
                 adauga_undo();
                 undo.push_back({2,nod_st,nod_dest});
-                if(a[nod_st].st!=-1) a[a[nod_st].st].ant.remove(nod_st),undo.back().leg=1;
+                if(a[nod_st].st!=-1)
+                    {
+                     /*undo.back().leg=1;
+                     adauga_undo();
+                     undo.push_back({5,a[nod_st].st,nod_dest});*/
+                     a[a[nod_st].st].ant.remove(nod_st);
+                     undo.back().leg=a[nod_st].st;
+                    }
                 a[nod_st].st=nod_dest;
                 a[nod_dest].ant.push_back(nod_st);
                 nod_st=nod_dr=nod_dest=-1;
@@ -2779,7 +2834,14 @@ void click_stanga() /// click stanga pentru a plasa blocuri si pentru a adauga b
             {
                 adauga_undo();
                 undo.push_back({2,nod_dr,nod_dest,0,0,0,0,1});
-                if(a[nod_dr].dr!=-1) a[a[nod_dr].dr].ant.remove(nod_dr),undo.back().leg=1;
+                if(a[nod_dr].dr!=-1)
+                    {
+                     /*undo.back().leg=1;
+                     adauga_undo();
+                     undo.push_back({,a[nod_dr].dr,nod_dest,0,0,0,0,1});*/
+                     a[a[nod_dr].dr].ant.remove(nod_dr);
+                     undo.back().leg=-a[nod_st].dr;
+                    }
                 a[nod_dr].dr=nod_dest;
                 a[nod_dest].ant.push_back(nod_dr);
                 a[nod_dest].ant.unique();
@@ -3057,7 +3119,7 @@ void ecran1()
         if(event) deseneaza_schema(),event=0;
 
         if(selectat>5) sterge_info();
-        if(selectat<=5 && !eroare && !rezult) sterge_info();
+        if(selectat<=5 && !eroare && !rezult) sterge_info(),sterge_variabile();
 
         if(options && ismouseclick(WM_LBUTTONDOWN))
         {
@@ -3087,7 +3149,9 @@ void ecran1()
 }
 void deschideFisier(int nr)
 {
-    char cale[20] = "salvate/schema";
+    char cale[NMAX]="salvate/";
+    strcat(cale,fisiere[nr]);
+    /*char cale[20] = "salvate/schema";
     int idx = 14;
     cout<<nr<<endl;
     do
@@ -3096,16 +3160,16 @@ void deschideFisier(int nr)
         nr /= 10;
     }
     while(nr);
-    cale[idx] = '\0';
-    strcat(cale,".txt");
-    cout<<cale<<endl;
+    cale[idx] = '\0';*/
+    //strcat(cale,".txt");
+    //cout<<"Q"<<nr<<' '<<fisier_curent<<' '<<cale<<endl;
     FILE* fptr = fopen(cale,"r");
 
     fread(&nr_blocuri,sizeof(int),1,fptr);
-    cout<<nr_blocuri<<endl;
+    //cout<<nr_blocuri<<endl;
     for(int i=6; i<nr_blocuri; i++)
     {
-        int lenSir,lenAnt;
+        int lenSir,lenAnt=0;
 
         fread(&a[i].tip,sizeof(int),1,fptr);
         fread(&a[i].nr,sizeof(int),1,fptr);
@@ -3126,8 +3190,8 @@ void deschideFisier(int nr)
         fread(&a[i].st,sizeof(int),1,fptr);
         fread(&a[i].dr,sizeof(int),1,fptr);
         fread(&lenAnt,sizeof(int),1,fptr);
-        list<int>::iterator iter;
-        for(int i=1; i<=lenAnt; i++)
+        //list<int>::iterator iter;
+        for(int j=1; j<=lenAnt; j++)
         {
             int val;
             fread(&val,sizeof(int),1,fptr);
@@ -3138,8 +3202,9 @@ void deschideFisier(int nr)
     fclose(fptr);
 }
 
-void redeseneaza(int curEcranY,int nr_fisiere,string fisiere[])
+void redeseneaza(int curEcranY)
 {
+    setbkcolor(fundal);
     cleardevice();
     int width=getmaxwidth();
     for(int i=0; i<nr_butoane; i++)
@@ -3161,6 +3226,8 @@ void redeseneaza(int curEcranY,int nr_fisiere,string fisiere[])
         {
             cnt++;
             rectangle(curEcranX + spatiuStanga,curEcranY + spatiuSus,curEcranX + spatiuStanga + widthBloc,curEcranY + spatiuSus + heightBloc);
+            setbkcolor(fundal);
+            setcolor(text_color);
             outtextxy(curEcranX + spatiuStanga + 50,curEcranY + spatiuSus + 35,str);
         }
         spatiuSus += 150;
@@ -3214,8 +3281,8 @@ void Deschide(int i)
             {
                 nr = nr * 10 + (fisiere[i][j] - '0');
             }*/
-            nr=nr_fisier[i];
-            deschideFisier(nr);
+            //nr=nr_fisier[i];
+            deschideFisier(i);
             cleardevice();
             setbkcolor(BLACK);
             clearviewport();
@@ -3226,17 +3293,46 @@ void Deschide(int i)
             ecranCurent = 1;
             ecran_schimbat=1;
             continuare=2;
+            fisier_curent=i;
+
 
 }
 
 void Sterge(int bloc)
 {
-
+    for(int i=bloc;i<nr_fisiere;i++)
+        strcpy(fisiere[i],fisiere[i+1]);
+    nr_fisiere--;
 }
 
-void Redenumeste(int bloc)
+void Redenumeste(int bloc, int curEcranY)
 {
-
+    strcpy(fisiere[bloc],"");
+    redeseneaza(curEcranY);
+    bool ok=1;
+    int nr=0;
+    while(ok)
+    {
+        if(ismouseclick(WM_LBUTTONDOWN))
+        {
+            clearmouseclick(WM_LBUTTONDOWN);
+            ok=0;
+        }
+        if(kbhit())
+        {
+            char c=getch();
+            if(c==13 || nr==10)  {ok=0; break;}
+            if(c==8)
+                {
+                    if(nr>0) nr--;
+                }
+                else  fisiere[bloc][nr++]=c;
+            fisiere[bloc][nr]='\0';
+            redeseneaza(curEcranY);
+        }
+    }
+    strcat(fisiere[bloc],".txt");
+    salvare(bloc);
 }
 
 void option4()
@@ -3244,7 +3340,7 @@ void option4()
 
 }
 
-bool verifica_optiuni_salvate(int x, int y,int bloc)
+bool verifica_optiuni_salvate(int x, int y, int bloc, int curEcranY)
 {
     int a=mousex(),b=mousey();
     clearmouseclick(WM_LBUTTONDOWN);
@@ -3252,7 +3348,7 @@ bool verifica_optiuni_salvate(int x, int y,int bloc)
     if(a<x || a>x+option_width || b<y || b>y+3*option_height) return false ;
     if(nr==0) Deschide(bloc);
     if(nr==1) Sterge(bloc);
-    if(nr==2) Redenumeste(bloc);
+    if(nr==2) Redenumeste(bloc,curEcranY);
     return true;
 }
 
@@ -3309,11 +3405,11 @@ void ecran2()
     while(!ecran_schimbat)
     {
         delay(100);
-        if(event) redeseneaza(curEcranY,nr_fisiere,fisiere),event=0;
+        if(event) redeseneaza(curEcranY),event=0;
         if(ismouseclick(WM_LBUTTONDOWN))
         {
             if(bloc!=-1)
-                verifica_optiuni_salvate(300,(bloc-curBloc-1)*150+100,bloc);
+                verifica_optiuni_salvate(300,(bloc-curBloc-1)*150+100,bloc,curEcranY);
             bloc=click_stanga_salvate(curBloc,nr_fisiere);
             if(ok) event=1,ok=0;
 
@@ -3331,9 +3427,7 @@ void ecran2()
         }
         if(kbhit())
         {
-            char c;//=getch() ;cout<<'\n'<<c<<'\n';
-            if(getch()==0) c=getch();
-            else break;
+            char c=getch();
 
             if(c == 72)
             {
@@ -3363,7 +3457,9 @@ void ecran2()
 
 void afisareCursor(int &n,char s[][NMAX],int idx)
 {
-    cleardevice();
+    setfillstyle(SOLID_FILL,fundal);
+    floodfill(1,51,BLUE);
+    setbkcolor(fundal);
     int width=getmaxwidth() / 2;
     for(int i=0; i<1; i++)
         desenare_buton(i*width,(i+1)*width,culori_butoane[i],mesaje_butoane[i]);
@@ -3374,6 +3470,8 @@ void afisareCursor(int &n,char s[][NMAX],int idx)
     n = 1 - n;
     for(int i=0; i<=idx; i++)
     {
+        setbkcolor(fundal);
+        setcolor(text_color);
         outtextxy(100,100+50*i,s[i]);
     }
 }
@@ -3392,6 +3490,7 @@ void scrieInFisier(char s[][NMAX],int n)
 void ecran3()
 {
     cleardevice();
+    setbkcolor(fundal);
     char c,s[20][NMAX];
     int n = 0;
     int cursor = 0;
@@ -3463,6 +3562,7 @@ void ecran3()
                 idx++;
                 n = 0;
                 s[idx][n] = '\0';
+                setbkcolor(fundal);
                 cleardevice();
 
             }
@@ -3501,6 +3601,11 @@ void ecran5()
     cleardevice();
 }
 
+void launch()
+{
+    incarca_blocuri();
+}
+
 int main()
 {
     ecrane[0] = 1; //Meniul este primul ecran apelat
@@ -3512,7 +3617,7 @@ int main()
     initwindow(getmaxwidth(),getmaxheight()-25,"InterSchem");///1530 810
 
     // registermousehandler(WM_LBUTTONUP,click_handler); //Click Handlerul
-
+    launch();
     do
     {
         settextstyle(3,0,0);
