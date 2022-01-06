@@ -1280,17 +1280,45 @@ void aducere_in_plan(punct &pStart, punct &pStop)
 {
     pStart.x=max(0,pStart.x);
     pStart.x=min(lungime,pStart.x);
+
     pStop.x=max(0,pStop.x);
     pStop.x=min(lungime,pStop.x);
+
     pStart.y=max(colt_y,pStart.y);
     pStart.y=min(colt_y+inaltime,pStart.y);
+
     pStop.y=max(colt_y,pStop.y);
     pStop.y=min(colt_y+inaltime,pStop.y);
 }
 
-bool testLinie(linie l)
+bool testLinie(linie l,int px)
 {
-    return !(l.p1.x <= 6 && l.p2.x <= 6 || l.p1.y <= 106 && l.p2.y <= 106);
+    px = abs(px);
+    return !(l.p1.x <= px && l.p2.x <= px || l.p1.y <= colt_y+px && l.p2.y <= colt_y+px || l.p1.x >= colt_x + lungime && l.p2.x >= colt_x + lungime || l.p1.y >= colt_y + inaltime && l.p2.y >= colt_y + inaltime );
+}
+
+void trasareLinie(linie l,int px)
+{
+    aducere_in_plan(l.p1,l.p2);
+    if(testLinie(l,px))
+    {
+        line(l.p1.x,l.p1.y,l.p2.x,l.p2.y);
+    }
+}
+
+int trasareLinie(int a,int b,int c,int d,int px)
+{
+    linie l;
+    l.p1.x = a;
+    l.p1.y = b;
+    l.p2.x = c;
+    l.p2.y = d;
+    if(testLinie(l,px))
+    {
+        line(l.p1.x,l.p1.y,l.p2.x,l.p2.y);
+        return 1;
+    }
+    return 0;
 }
 
 void trasareSageata(linie l,int tip)
@@ -1307,14 +1335,16 @@ void trasareSageata(linie l,int tip)
             return ;
         if(l.p1.x <= l.p2.x)
         {
-            line(midx,midy,midx-px,midy-px);
-            line(midx,midy,midx-px,midy+px);
+            int ok = trasareLinie(midx,midy,midx-px,midy-px,px);
+            if(ok)
+                trasareLinie(midx,midy,midx-px,midy+px,px);
 
         }
         else
         {
-            line(midx,midy,midx+px,midy+px);
-            line(midx,midy,midx+px,midy-px);
+            int ok = trasareLinie(midx,midy,midx+px,midy+px,px);
+            if(ok)
+                trasareLinie(midx,midy,midx+px,midy-px,px);
         }
     }
     else
@@ -1323,19 +1353,24 @@ void trasareSageata(linie l,int tip)
             return;
         if(l.p1.y <= l.p2.y)
         {
-            line(midx,midy,midx-px,midy-px);
-            line(midx,midy,midx+px,midy-px);
+            int ok = trasareLinie(midx,midy,midx-px,midy-px,px);
+            if(ok)
+                trasareLinie(midx,midy,midx+px,midy-px,px);
 
         }
         else
         {
-            line(midx,midy,midx+px,midy+px);
-            line(midx,midy,midx-px,midy+px);
+            int ok = trasareLinie(midx,midy,midx+px,midy+px,px);
+            if(ok)
+                trasareLinie(midx,midy,midx-px,midy+px,px);
         }
     }
 }
 
-
+bool punctInterior(linie& l,int i)
+{
+    return (a[i].x <= l.p2.x && l.p2.x <= a[i].x+a[i].width && a[i].y <= l.p2.y && l.p2.y <= a[i].y+a[i].height);
+}
 
 void ocolireVertical(linie& l,linie& aux,int px,int i)
 {
@@ -1346,12 +1381,10 @@ void ocolireVertical(linie& l,linie& aux,int px,int i)
     else // daca linia vine din sus in jos
         aux.p2.y = a[i].y + px;
 
-
-    line(aux.p1.x,aux.p1.y,aux.p2.x,aux.p2.y); // trasam prima parte, linia verticala dinaintea blocului
+    trasareLinie(aux,px); // trasam prima parte, linia verticala dinaintea blocului
     trasareSageata(aux,2);
 
     aux.p1 = aux.p2;
-
     if(px > 0) // daca linia vine din jos in sus
         if(l.p1.x <= a[i].x + a[i].width / 2) // daca i mai convenabil prin stanga
             aux.p2.x = a[i].x - px;
@@ -1363,88 +1396,158 @@ void ocolireVertical(linie& l,linie& aux,int px,int i)
         else                                  //daca i mai convenabil prin dreapta
             aux.p2.x = a[i].x + a[i].width - px;
 
-    line(aux.p1.x,aux.p1.y,aux.p2.x,aux.p2.y); // trasam partea a doua, linia orizontala care ocoleste blocul
+    trasareLinie(aux,px); // trasam partea a doua, linia orizontala care ocoleste blocul
     trasareSageata(aux,1);
 
     aux.p1 = aux.p2;
-
     if(px > 0) // daca linia vine din jos in sus
         aux.p2.y = a[i].y - px;
     else
         aux.p2.y = a[i].y + a[i].height - px;
 
-    line(aux.p1.x,aux.p1.y,aux.p2.x,aux.p2.y); // trasam partea a treia, linia verticala care ocoleste blocul
+    trasareLinie(aux,px); // trasam partea a treia, linia verticala care ocoleste blocul
     trasareSageata(aux,2);
 
     aux.p1 = aux.p2;
-
-    aux.p2.y = aux.p1.y; // ramanem pe aceasi orizontala
+    aux.p2.y = aux.p1.y; // ramanem pe aceeasi orizontala
     aux.p2.x = l.p2.x;  // schimbam x-ul
 
-    line(aux.p1.x,aux.p1.y,aux.p2.x,aux.p2.y); // trasam ultima parte, care leaga linia de ocolire, cu punctul prin care ar fi trebuit sa treaca linia, daca nu exista blocul i
+    trasareLinie(aux,px); // trasam ultima parte, care leaga linia de ocolire, cu punctul prin care ar fi trebuit sa treaca linia, daca nu exista blocul i
     trasareSageata(aux,1);
 
     aux.p1 = aux.p2;
 }
 
-bool punctInterior(linie& l,int i)
-{
-    return (a[i].x <= l.p2.x && l.p2.x <= a[i].x+a[i].width && a[i].y <= l.p2.y && l.p2.y <= a[i].y+a[i].height);
-}
-
 void ocolireVerticalaDesteapta(linie& l1,int i,linie* next,int px,int y)
 {
-
     l1.p2.x = l1.p1.x; // ramanem pe aceasi verticala
-
     if(px > 0) // daca mergem din jos in sus
         l1.p2.y = a[i].y + a[i].height + px;
     else // daca mergem din sus in jos
         l1.p2.y = a[i].y + px;
 
-    line(l1.p1.x,l1.p1.y,l1.p2.x,l1.p2.y); // trasam prima parte, pana la inceputul blocului
+    trasareLinie(l1,px); // trasam prima parte, pana la inceputul blocului
     trasareSageata(l1,2);
 
     l1.p1 = l1.p2;
-
-    if(next->p1.x >= next->p2.x) // daca linia urmatoare o ia spre stanga
-        if(px > 0) // daca mergem din jos in sus
-            l1.p2.x = a[i].x - px; //
-        else // daca mergem din sus in jos
+    if(next->p1.x >= next->p2.x)
+        if(px > 0)
+            l1.p2.x = a[i].x - px;
+        else
             l1.p2.x = a[i].x + px;
-    else // daca linia urmatoare o ia spre dreapta
-        if(px > 0) // daca mergem din jos in sus
-            l1.p2.x = a[i].x + a[i].width + px; //
-        else // daca mergem din sus in jos
+    else
+        if(px > 0)
+            l1.p2.x = a[i].x + a[i].width + px;
+        else
             l1.p2.x = a[i].x + a[i].width - px;
+    trasareLinie(l1,px); // trasam a doua parte, pana ce ocolim pe orizontala
+    trasareSageata(l1,1);
 
-    line(l1.p1.x,l1.p1.y,l1.p2.x,l1.p2.y); // trasam a doua parte, pana ce ocolim pe orizontala
+    l1.p1 = l1.p2;
+    l1.p2.x = l1.p1.x; // ramanem pe aceasi verticala
+    l1.p2.y = y; // mentinem y-ul punctului in care ar fi trebuit sa ajungem, care s-ar fi aflat in interiorul ultimului bloc
+
+    trasareLinie(l1,px); // trasam a treia parte, ca sa ajungem in punctul de coordonate y corespunzator, dar in afara blocului
+    trasareSageata(l1,2);
+}
+
+void ocolireOrizontal(linie& l,linie& aux,int px,int i)
+{
+    aux.p2.y = aux.p1.y;
+    if(px > 0)
+        aux.p2.x = a[i].x - px;
+    else
+        aux.p2.x = a[i].x + a[i].width - px;
+
+    trasareLinie(aux,px);
+    trasareSageata(aux,1);
+
+    aux.p1 = aux.p2;
+    if(px > 0)
+        if(l.p1.y <= a[i].y + a[i].height / 2 )
+            aux.p2.y = a[i].y - px;
+        else
+            aux.p2.y = a[i].y + a[i].height + px;
+    else
+        if(l.p1.y <= a[i].y + a[i].height / 2)
+            aux.p2.y = a[i].y + px;
+        else
+            aux.p2.y = a[i].y + a[i].height - px;
+
+    trasareLinie(aux,px);
+    trasareSageata(aux,2);
+
+    aux.p1 = aux.p2;
+    aux.p2.y = aux.p1.y;
+    if(px > 0)
+        aux.p2.x = a[i].x + a[i].width + px;
+    else
+        aux.p2.x = a[i].x + px;
+    trasareLinie(aux,px);
+    trasareSageata(aux,1);
+
+    aux.p1 = aux.p2;
+    aux.p2.x = aux.p1.x;
+    aux.p2.y = l.p1.y;
+
+    trasareLinie(aux,px);
+    trasareSageata(aux,2);
+
+    aux.p1 = aux.p2;
+}
+
+void ocolireOrizontalaDesteapta(linie& l1,int i,linie* next,int px,int x)
+{
+    l1.p2.y = l1.p1.y; // ramanem pe aceasi verticala
+
+    if(px < 0) // daca mergem din jos in sus
+        l1.p2.x = a[i].x + a[i].width - px;
+    else // daca mergem din sus in jos
+        l1.p2.x = a[i].x - px;
+    trasareLinie(l1,px); // trasam prima parte, pana la inceputul blocului
     trasareSageata(l1,1);
 
     l1.p1 = l1.p2;
 
-    l1.p2.x = l1.p1.x; // ramanem pe aceasi verticala
-    l1.p2.y = y; // mentinem y-ul punctului in care ar fi trebuit sa ajungem, care s-ar fi aflat in interiorul ultimului bloc
+    if(next->p1.y >= next->p2.y)
+        if(px < 0)
+            l1.p2.y = a[i].y + px;
+        else
+            l1.p2.y = a[i].y - px;
+    else
+        if(px < 0)
+            l1.p2.y = a[i].y + a[i].height - px;
+        else
+            l1.p2.y = a[i].y + a[i].height + px;
 
-    line(l1.p1.x,l1.p1.y,l1.p2.x,l1.p2.y); // trasam a treia parte, ca sa ajungem in punctul de coordonate y corespunzator, dar in afara blocului
+    trasareLinie(l1,px); // trasam a doua parte, pana ce ocolim pe orizontala
     trasareSageata(l1,2);
+
+    l1.p1 = l1.p2;
+    l1.p2.y = l1.p1.y; // ramanem pe aceasi verticala
+    l1.p2.x = x; // mentinem y-ul punctului in care ar fi trebuit sa ajungem, care s-ar fi aflat in interiorul ultimului bloc
+
+    trasareLinie(l1,px); // trasam a treia parte, ca sa ajungem in punctul de coordonate y corespunzator, dar in afara blocului
+    trasareSageata(l1,1);
 
 }
 
-
-void trasareVertical(linie& l,linie* next,int nod1,int nod2) //traseaza o linie pe verticala, verificand si evitand eventuale blocuri aflate pe aceasta directie
+void trasareVertical(linie& l,linie* next,int nod1,int nod2) //traseaza o linie pe verticala, verificand si evitand eventuale blocuri aflate pe aceasta dreapta
 {
     int v[10]; // vector in care se vor stoca indicele blocurilor care s-ar afla peste linia trasata
     int len = 0; // initial nu exista blocuri care se suprapun cu linia
     int px = a[5].width / 10;
-    linie aux;
+    linie aux,aux2;
+
+    aducere_in_plan(l.p1,l.p2);
 
     for(int i=6; i<nr_blocuri; i++) // parcurgem toate blocurile care nu se afla in meniul de jos
-    {
-        int tipIntersectie = intersectie(l,i); // functia intersectie ne va returna tipul intersectiei dintre o linie si un dreptunghi de indice i (0 - niciuna,1 - vertical, 2 - orizontal)
-        if(tipIntersectie == 1) // daca avem o intersectie pe verticala a blocului i, atunci il adaugam in vector
-            v[++len] = i;
-    }
+        if(a[i].ok)
+        {
+            int tipIntersectie = intersectie(l,i); // functia intersectie ne va returna tipul intersectiei dintre o linie si un dreptunghi de indice i (0 - niciuna,1 - vertical, 2 - orizontal)
+            if(tipIntersectie == 1) // daca avem o intersectie pe verticala a blocului i, atunci il adaugam in vector
+                v[++len] = i;
+        }
 
     sorteaza(v,len,1); // sortam blocurile in functie de coordonata y(tratam cazul in care avem mai multe blocuri pe directia liniei)
 
@@ -1461,114 +1564,21 @@ void trasareVertical(linie& l,linie* next,int nod1,int nod2) //traseaza o linie 
 
     if(len == 0) // daca nu exista bloc cu care linia se intersecteaza
     {
-        line(l.p1.x,l.p1.y,l.p2.x,l.p2.y);
+        trasareLinie(l,px);
         trasareSageata(l,2);
-
     }
     else if(next != NULL && punctInterior(l,v[len]))  // verificam daca i o linie care are punctul destinatie intr-un bloc
     {
-        if(a[nod1].ok || a[nod2].ok)
-        {
-            ocolireVerticalaDesteapta(aux,v[len],next,px,l.p2.y); // ocoleste destept acest obstacol (punctul se va afla pe acelasi y cu punctul in care ar fi trebuit sa fie, dar x ul este diferit in functie de linia urmatoare)
-            l = aux; // actualizam inceputul liniei urmatoare
-        }
+        ocolireVerticalaDesteapta(aux,v[len],next,px,l.p2.y); // ocoleste destept acest obstacol (punctul se va afla pe acelasi y cu punctul in care ar fi trebuit sa fie, dar x ul este diferit in functie de linia urmatoare)
+        l = aux; // actualizam inceputul liniei urmatoare
     }
     else // daca nu are punct interior atunci il ocolim ca celelalte blocuri
     {
         ocolireVertical(l,aux,px,v[len]);
-        line(aux.p2.x,aux.p2.y,l.p2.x,l.p2.y); // il legam cu punctul in care ar trebui sa ajunga linia
+        aux2.p1.x = aux.p2.x, aux2.p1.y = aux.p2.y, aux2.p2.x = l.p2.x, aux2.p2.y = l.p2.y;
+        trasareLinie(aux2,px); // il legam cu punctul in care ar trebui sa ajunga linia
     }
     l.p1 = l.p2; // copiem p2 in p1, din acest punct incepem urmatoarea linie
-}
-
-void ocolireOrizontal(linie& l,linie& aux,int px,int i)
-{
-    aux.p2.y = aux.p1.y;
-    if(px > 0)
-        aux.p2.x = a[i].x - px;
-    else
-        aux.p2.x = a[i].x + a[i].width - px;
-
-    line(aux.p1.x,aux.p1.y,aux.p2.x,aux.p2.y);
-    trasareSageata(aux,1);
-
-    aux.p1 = aux.p2;
-    if(px > 0)
-    {
-        if(l.p1.y <= a[i].y + a[i].height / 2 )
-            aux.p2.y = a[i].y - px;
-        else
-            aux.p2.y = a[i].y + a[i].height + px;
-    }
-    else
-    {
-        if(l.p1.y <= a[i].y + a[i].height / 2)
-            aux.p2.y = a[i].y + px;
-        else
-            aux.p2.y = a[i].y + a[i].height - px;
-    }
-    line(aux.p1.x,aux.p1.y,aux.p2.x,aux.p2.y);
-    trasareSageata(aux,2);
-
-    aux.p1 = aux.p2;
-    aux.p2.y = aux.p1.y;
-    if(px > 0)
-    {
-        aux.p2.x = a[i].x + a[i].width + px;
-    }
-    else
-    {
-        aux.p2.x = a[i].x + px;
-    }
-    line(aux.p1.x,aux.p1.y,aux.p2.x,aux.p2.y);
-    trasareSageata(aux,1);
-
-
-    aux.p1 = aux.p2;
-    aux.p2.x = aux.p1.x;
-    aux.p2.y = l.p1.y;
-    line(aux.p1.x,aux.p1.y,aux.p2.x,aux.p2.y);
-    trasareSageata(aux,2);
-
-    aux.p1 = aux.p2;
-}
-
-void ocolireOrizontalaDesteapta(linie& l1,int i,linie* next,int px,int x)
-{
-    l1.p2.y = l1.p1.y; // ramanem pe aceasi verticala
-
-    if(px < 0) // daca mergem din jos in sus
-        l1.p2.x = a[i].x + a[i].width - px;
-    else // daca mergem din sus in jos
-        l1.p2.x = a[i].x - px;
-
-    line(l1.p1.x,l1.p1.y,l1.p2.x,l1.p2.y); // trasam prima parte, pana la inceputul blocului
-    trasareSageata(l1,1);
-
-    l1.p1 = l1.p2;
-
-    if(next->p1.y >= next->p2.y) // daca linia urmatoare o ia in sus
-        if(px < 0) // daca mergem din jos in sus
-            l1.p2.y = a[i].y + px; //
-        else // daca mergem din sus in jos
-            l1.p2.y = a[i].y - px;
-    else // daca linia urmatoare o ia spre dreapta
-        if(px < 0) // daca mergem din jos in sus
-            l1.p2.y = a[i].y + a[i].height - px; //
-        else // daca mergem din sus in jos
-            l1.p2.y = a[i].y + a[i].height + px;
-
-    line(l1.p1.x,l1.p1.y,l1.p2.x,l1.p2.y); // trasam a doua parte, pana ce ocolim pe orizontala
-    trasareSageata(l1,2);
-
-    l1.p1 = l1.p2;
-
-    l1.p2.y = l1.p1.y; // ramanem pe aceasi verticala
-    l1.p2.x = x; // mentinem y-ul punctului in care ar fi trebuit sa ajungem, care s-ar fi aflat in interiorul ultimului bloc
-
-    line(l1.p1.x,l1.p1.y,l1.p2.x,l1.p2.y); // trasam a treia parte, ca sa ajungem in punctul de coordonate y corespunzator, dar in afara blocului
-    trasareSageata(l1,1);
-
 }
 
 void trasareOrizontal(linie& l,linie* next,int nod1,int nod2)
@@ -1576,14 +1586,17 @@ void trasareOrizontal(linie& l,linie* next,int nod1,int nod2)
     int v[10]; // vector in care se vor stoca indicele blocurilor care s-ar afla peste linia trasata
     int len = 0; // initial nu exista blocuri care se suprapun cu linia
     int px = a[5].width / 10; //
-    linie aux;
+    linie aux,aux2;
+
+    aducere_in_plan(l.p1,l.p2);
 
     for(int i=6; i<nr_blocuri; i++)
-    {
-        int tipIntersectie = intersectie(l,i);
-        if(tipIntersectie == 2)
-            v[++len] = i;
-    }
+        if(a[i].ok)
+        {
+            int tipIntersectie = intersectie(l,i);
+            if(tipIntersectie == 2)
+                v[++len] = i;
+        }
 
     sorteaza(v,len,2); // sorteaza dupa x in ordine crescatoare
 
@@ -1601,20 +1614,19 @@ void trasareOrizontal(linie& l,linie* next,int nod1,int nod2)
 
     if(len == 0) // daca nu exista bloc cu care linia se intersecteaza
     {
-        line(l.p1.x,l.p1.y,l.p2.x,l.p2.y);
+        trasareLinie(l,px);
         trasareSageata(l,1);
     }
-    else if(next != NULL && punctInterior(l,v[len])) // verificam daca i o linie care are punctul destinatie intr-un bloc
+    else if(next != NULL && punctInterior(l,v[len])) // verificam daca i este o linie care are punctul destinatie intr-un bloc
     {
-        if(a[nod1].ok || a[nod2].ok)
-        {   ocolireOrizontalaDesteapta(aux,v[len],next,px,l.p2.x); // ocoleste destept acest obstacol (punctul se va afla pe acelasi y cu punctul in care ar fi trebuit sa fie, dar x ul este diferit in functie de linia urmatoare)
-            l = aux; // actualizam inceputul liniei urmatoare
-        }
+        ocolireOrizontalaDesteapta(aux,v[len],next,px,l.p2.x); // ocoleste destept acest obstacol (punctul se va afla pe acelasi y cu punctul in care ar fi trebuit sa fie, dar x ul este diferit in functie de linia urmatoare)
+        l = aux; // actualizam inceputul liniei urmatoare
     }
     else // daca nu are punct interior atunci il ocolim ca celelalte blocuri
     {
         ocolireOrizontal(l,aux,px,v[len]);
-        line(aux.p2.x,aux.p2.y,l.p2.x,l.p2.y); // il legam cu punctul in care ar trebui sa ajunga linia
+         aux2.p1.x = aux.p2.x, aux2.p1.y = aux.p2.y, aux2.p2.x = l.p2.x, aux2.p2.y = l.p2.y;
+        trasareLinie(aux2,px); // il legam cu punctul in care ar trebui sa ajunga linia
     }
     l.p1 = l.p2;
 }
@@ -1624,7 +1636,21 @@ void trasare_legatura(int nod1,int nod2,int tip,int dr)
     blocuri n1=a[nod1],n2=a[nod2];
     punct pStart,pStop;  // punctele de inceput si final
     setcolor(line_color);
-    linie l[5],aux;      // legatura este impartita in mai multe linii orizontale/verticale
+    linie l[5],aux, aux1, aux2; // legatura este impartita in mai multe linii orizontale/verticale
+
+    aux1.p1.x = a[nod1].x;
+    aux1.p1.y = a[nod1].x + a[nod1].width;
+    aux1.p2.x = a[nod1].y;
+    aux1.p2.y = a[nod1].y + a[nod1].height;
+
+    aux2.p1.x = a[nod2].x;
+    aux2.p1.y = a[nod2].x + a[nod2].width;
+    aux2.p2.x = a[nod2].y;
+    aux2.p2.y = a[nod2].y + a[nod2].height;
+
+    aducere_in_plan(aux1.p1,aux1.p2);
+    aducere_in_plan(aux2.p1,aux2.p2);
+
     int px = a[nod1].width / 10;
 
     if(tip == 4) // daca este un bloc de decizie (are doua noduri de iesire aflate in colturi)
@@ -1647,13 +1673,10 @@ void trasare_legatura(int nod1,int nod2,int tip,int dr)
 
     // coordonate folosite pentru a detecta cazul in care blocul destinatie se afla strict deasupra blocului sursa
     // cx1,cx2 reprezinta segmentul aflat la baza nodului sursa, iar cy1,cy2 reprezinta segmentul aflat la baza nodului destinatie
-    int cx1 = a[nod1].x, cx2 = a[nod1].x + a[nod1].width;
-    int cy1 = a[nod2].x, cy2 = a[nod2].x + a[nod2].width;
+    int cx1 = aux1.p1.x, cx2 = aux1.p1.y;
+    int cy1 = aux2.p1.x, cy2 = aux2.p1.y;
 
-    aducere_in_plan(pStart,pStop);
-    cout<<pStart.x<<" "<<pStart.y<<endl;
-
-    if(!a[nod1].ok && !a[nod2].ok)
+    if(!a[nod1].ok && !a[nod2].ok && a[nod1].x < 0 && a[nod2].x < 0) // daca ambele noduri nu mai sunt deloc vizibile, inclusiv legatura lor
         return ;
 
     if(pStart.y <= pStop.y) // daca blocul destinatie se afla sub blocul sursa (legatura merge in jos)
@@ -1680,7 +1703,6 @@ void trasare_legatura(int nod1,int nod2,int tip,int dr)
         aux.p2.x = pStop.x;
         aux.p2.y = aux.p1.y;
 
-
         trasareOrizontal(aux,&l[2],nod1,nod2);
 
         aux.p2 = l[2].p2;
@@ -1690,16 +1712,15 @@ void trasare_legatura(int nod1,int nod2,int tip,int dr)
 
     else if(pStart.y > pStop.y && cx2 >= cy1 && cy2 >= cx1)
     {
-
         l[0].p1 = pStart;
         l[0].p2.x = pStart.x;
         l[0].p2.y = pStart.y + px;
 
         l[1].p1 = l[0].p2;
         if(pStop.x <= pStart.x)
-            l[1].p2.x = min(a[nod1].x,a[nod2].x) - px;
+            l[1].p2.x = min(aux1.p1.x,aux2.p1.x) - px;
         else
-            l[1].p2.x = max(a[nod1].x + a[nod1].width,a[nod2].x + a[nod2].width) + px;
+            l[1].p2.x = max(aux1.p1.y,aux2.p1.y) + px;
         l[1].p2.y = l[0].p2.y;
 
         l[2].p1 = l[1].p2;
@@ -1713,18 +1734,16 @@ void trasare_legatura(int nod1,int nod2,int tip,int dr)
         l[4].p1 = l[3].p2;
         l[4].p2 = pStop;
 
-        //trasareVertical(l);
-
         aux = l[0];
         trasareVertical(aux,&l[1],nod1,nod2);
 
         if(pStop.x <= pStart.x)
-            aux.p2.x = min(a[nod1].x,a[nod2].x) - px;
+            aux.p2.x = min(aux1.p1.x,aux2.p1.x) - px;
         else
-            aux.p2.x = max(a[nod1].x + a[nod1].width,a[nod2].x + a[nod2].width) + px;
+            aux.p2.x = max(aux1.p1.y,aux2.p1.y) + px;
         aux.p2.y =  l[0].p2.y;;
-        if(testLinie(aux))
-            trasareOrizontal(aux,&l[2],nod1,nod2);
+
+        trasareOrizontal(aux,&l[2],nod1,nod2);
 
         aux.p2.x = aux.p1.x;
         aux.p2.y = a[nod2].y - px;
@@ -1736,38 +1755,30 @@ void trasare_legatura(int nod1,int nod2,int tip,int dr)
 
         aux.p2 = pStop;
         trasareVertical(aux,NULL,nod1,nod2);
-
     }
     else
     {
-        int dist = abs((a[nod2].x + a[nod1].x + a[nod1].width) / 2 );
+        int dist = abs((min(aux1.p1.y,aux2.p1.y) + max(aux1.p1.x, aux2.p1.x)) / 2 );
 
         l[0].p1 = pStart;
         l[0].p2.x = pStart.x;
         l[0].p2.y = pStart.y + px;
 
-        //trasareVertical(l);
         l[1].p1 = l[0].p2;
         l[1].p2.x = dist;
         l[1].p2.y = l[0].p1.y;
 
-        //trasareOrizontal(l);
-
         l[2].p1 = l[1].p2;
         l[2].p2.x = l[1].p1.x;
         l[2].p2.y = pStop.y - px;
-        //trasareVertical(l);
 
         l[3].p1 = l[2].p2;
         l[3].p2.x = pStop.x;
         l[3].p2.y = l[2].p2.y;
 
-        //trasareOrizontal(l);
-
         l[4].p1 = l[3].p2;
         l[4].p2 = pStop;
 
-        //trasareOrizontal(l);
         aux = l[0];
         trasareVertical(aux,&l[1],nod1,nod2);
 
@@ -1793,7 +1804,6 @@ void trasare_legatura(int nod1,int nod2,int tip,int dr)
 void deseneaza_legaturi()
 {
     for(int i=6; i<nr_blocuri; i++) // parcurgem toate blocurile care nu se afla in meniul de jos
-        //if(a[i].ok)
     {
         if(a[i].st !=-1)// && a[a[i].st].ok)
             trasare_legatura(i,a[i].st,a[i].tip,0); // legatura stanga
@@ -1802,7 +1812,6 @@ void deseneaza_legaturi()
             trasare_legatura(i,a[i].dr,a[i].tip,1); // legatura dreapta
     }
 }
-
 
 void deseneaza_schema()
 {
@@ -2052,7 +2061,7 @@ void verifica_erori_desen()
     if(S.size()) eroare=1;
 }
 
-void salvare(int numar=fisier_curent)
+/*void salvare(int numar=fisier_curent)
 {
     char folder[NMAX] = "salvate/schema";
     int cifre=1,i;
@@ -2117,8 +2126,85 @@ void salvare(int numar=fisier_curent)
 
     }
     fclose(fptr);
-}
+}*/
+void salvare(int numar=-1,char numeVechi[]="")
+{
+    char folder[NMAX] = "salvate/schema";
+    int i,cifre;
 
+    if(numar == -1)
+    {
+        numar = nextFileName(cifre);
+        int aux = pow(10,cifre-1);
+
+        for(i=14; cifre != 0; i++,cifre--)
+        {
+            folder[i] = '0' + numar / aux;
+            numar = numar % aux;
+            aux /= 10;
+        }
+        folder[i] = '.';
+        folder[i+1] = 't';
+        folder[i+2] = 'x';
+        folder[i+3] = 't';
+        folder[i+4] = '\0';
+        cout<<"Numar Lipsa: "<<numar<<endl;
+
+        nr_fisiere++;
+        fisier_curent=nr_fisiere;
+
+        cout<<nr_fisiere<<' '<<folder<<endl;
+
+
+        FILE* fptr = fopen(folder,"w");
+        fwrite(&nr_blocuri,sizeof(int),1,fptr);
+        fwrite(&start_main,sizeof(int),1,fptr);
+
+        for(int i=6; i<nr_blocuri; i++)
+        {
+            int lenSir = strlen(a[i].text);
+            int lenAnt = a[i].ant.size();
+            fwrite(&a[i].tip,sizeof(int),1,fptr);
+            fwrite(&a[i].nr,sizeof(int),1,fptr);
+            fwrite(&a[i].x,sizeof(double),1,fptr);
+            fwrite(&a[i].y,sizeof(double),1,fptr);
+            fwrite(&a[i].x1,sizeof(double),1,fptr);
+            fwrite(&a[i].y1,sizeof(double),1,fptr);
+            fwrite(&a[i].width,sizeof(int),1,fptr);
+            fwrite(&a[i].height,sizeof(int),1,fptr);
+            fwrite(&a[i].h1,sizeof(int),1,fptr);
+            fwrite(&a[i].w1,sizeof(int),1,fptr);
+            fwrite(&lenSir,sizeof(int),1,fptr);
+            fwrite(&a[i].text,lenSir,1,fptr);
+
+            fwrite(&a[i].ok,sizeof(bool),1,fptr);
+            fwrite(&a[i].bucla,sizeof(bool),1,fptr);
+            fwrite(&a[i].st,sizeof(int),1,fptr);
+            fwrite(&a[i].dr,sizeof(int),1,fptr);
+            fwrite(&lenAnt,sizeof(int),1,fptr);
+            list<int>::iterator iter;
+            for(iter = a[i].ant.begin(); iter != a[i].ant.end(); iter++)
+                fwrite(&iter,sizeof(int),1,fptr);
+        }
+        fclose(fptr);
+    }
+    else
+    {
+        char path[100] = "salvate/";
+        char aux[100] = "";
+
+        cout<<numeVechi<<" "<<fisiere[numar]<<endl;
+
+        strcat(path,numeVechi);
+        strcat(aux,"salvate/");
+        strcat(aux,fisiere[numar]);
+
+        rename(path,aux);
+
+    }
+
+
+}
 
 void cautaVariabile(int variabileSetate[],int& nrVar,set<int>& vizitate,int nod)
 {
@@ -2457,10 +2543,13 @@ void executa()
     eroare=rezult=0;//cout<<'\n'<<"Q"<<evalueazaExpresie("1!=2")<<"Q"<<'\n';
     verifica_erori_desen();
     int i=start_main,rez;
+    stack<int>rad;
+
     while(a[i].tip!=1 && !eroare)
-    {
+    {   //cout<<"Q  "<<i<<'\n';
         int i1=i;
-        marcheaza_bloc(i1);
+        if(a[i1].ok)
+            marcheaza_bloc(i1);
         delay(viteza);
         if(strcmp(a[i].text,"")==0)
         {
@@ -2504,23 +2593,32 @@ void executa()
             if(a[i].st!=-1)
                 {
                     if(rez)
-                        i=a[i].st;
+                        {
+                            if(a[i].tip==4) rad.push(i);
+                            i=a[i].st;
+                            if(a[i].tip==1 && !rad.empty())
+                                {
+                                    i=a[rad.top()].dr;
+                                    rad.pop();
+                                }
+                        }
+                    else if(a[i].tip==4)
+                    {
+                        if(a[i].dr!=-1)
+                            {
+                                if(!rez)
+                                    i=a[i].dr;
+                            }
+                        else eroare=1;
+                    }
                 }
             else eroare=1;
-            if(a[i].tip==4)
-            {
-                if(a[i].dr!=-1)
-                    {
-                        if(!rez) i=a[i].dr;
-                    }
-                else eroare=1;
-
-            }
         }
         ///else S.push_back({i-5,eroare});
-        marcheaza_bloc(i1,color);
+       if(a[i1].ok)
+            marcheaza_bloc(i1,color);
     }
-    if(a[i].tip==1)
+    if(a[i].tip==1 && a[i].ok)
     {
         marcheaza_bloc(i,mark_color);
         delay(viteza);
@@ -2926,6 +3024,8 @@ void incarca_preview()
 
 void desenare_setari()
 {
+    setbkcolor(fundal);
+    cleardevice();
     seteaza_culori();
     setcolor(culoare_text);
     settextstyle(3,0,2);
@@ -3148,22 +3248,11 @@ void deschideFisier(int nr)
 {
     char cale[NMAX]="salvate/";
     strcat(cale,fisiere[nr]);
-    /*char cale[20] = "salvate/schema";
-    int idx = 14;
-    cout<<nr<<endl;
-    do
-    {
-        cale[idx++] = (nr % 10)+ '0';
-        nr /= 10;
-    }
-    while(nr);
-    cale[idx] = '\0';*/
-    //strcat(cale,".txt");
-    //cout<<"Q"<<nr<<' '<<fisier_curent<<' '<<cale<<endl;
-    FILE* fptr = fopen(cale,"r");
 
+    FILE* fptr = fopen(cale,"r");
     fread(&nr_blocuri,sizeof(int),1,fptr);
-    //cout<<nr_blocuri<<endl;
+    fread(&start_main,sizeof(int),1,fptr);
+
     for(int i=6; i<nr_blocuri; i++)
     {
         int lenSir,lenAnt=0;
@@ -3249,63 +3338,46 @@ void redeseneaza(int curEcranY)
             nr_butoane = 5;
             ecranCurent = 1;
             ecran_schimbat=1;
-
 }*/
-
-void clickDreaptaBloc(int curBloc,int nr_fisiere,string fisiere[])
-{
-    int x = mousex();
-    int y = mousey();
-    int xs = 100,ys = 100;
-    for(int i=1+curBloc; i<=nr_fisiere; i++)
-    {
-        if(xs <= x && x <= xs + 200 && ys <= y && y <= ys+100)
-        {
-            cout<<i<<endl;
-            // i este blocul pe care am dat click dreapta
-
-        }
-        ys += 150;
-    }
-}
 
 
 void Deschide(int i)
 {
-            int nr = 0;
-           /* int len = fisiere[i].size();
-            for(int j = len - 5; j >= 0 && isdigit(fisiere[i][j]); j--)
-            {
-                nr = nr * 10 + (fisiere[i][j] - '0');
-            }*/
-            //nr=nr_fisier[i];
-            deschideFisier(i);
-            cleardevice();
-            setbkcolor(BLACK);
-            clearviewport();
-            for(int i=0; i<7; i++)
-                ecrane[i] = 0;
-            ecrane[1] = 1;
-            nr_butoane = 6;
-            ecranCurent = 1;
-            ecran_schimbat=1;
-            continuare=2;
-            fisier_curent=i;
+    int nr = 0;
+    deschideFisier(i);
 
+    cleardevice();
+    setbkcolor(BLACK);
+    clearviewport();
+    for(int i=0; i<7; i++)
+        ecrane[i] = 0;
 
+    ecrane[1] = 1;
+    nr_butoane = 6;
+    ecranCurent = 1;
+    ecran_schimbat=1;
+    continuare=2;
+    fisier_curent=i;
 }
 
 void Sterge(int bloc)
 {
-    for(int i=bloc;i<nr_fisiere;i++)
+    char fisierStergere[100] = "";
+    strcat(fisierStergere,"salvate/");
+    strcat(fisierStergere,fisiere[bloc]);
+    remove(fisierStergere);
+    for(int i=bloc; i<nr_fisiere; i++)
         strcpy(fisiere[i],fisiere[i+1]);
     nr_fisiere--;
 }
 
 void Redenumeste(int bloc, int curEcranY)
 {
+    char numeVechi[NMAX];
+    strcpy(numeVechi,fisiere[bloc]);
     strcpy(fisiere[bloc],"");
     redeseneaza(curEcranY);
+
     bool ok=1;
     int nr=0;
     while(ok)
@@ -3318,20 +3390,25 @@ void Redenumeste(int bloc, int curEcranY)
         if(kbhit())
         {
             char c=getch();
-            if(c==13 || nr==10)  {ok=0; break;}
+            if(c==13 || nr==10)
+            {
+                ok=0;
+                break;
+            }
             if(c==8)
-                {
-                    if(nr>0) nr--;
-                }
-                else  fisiere[bloc][nr++]=c;
+            {
+                if(nr>0) nr--;
+            }
+            else  fisiere[bloc][nr++]=c;
             fisiere[bloc][nr]='\0';
+
             redeseneaza(curEcranY);
         }
     }
     strcat(fisiere[bloc],".txt");
-    salvare(bloc);
-}
+    salvare(bloc,numeVechi);
 
+}
 void option4()
 {
 
