@@ -783,12 +783,13 @@ void desenare_buton(int left, int right, int culoare, char text[])
     int width=right-left,height=50,lung_text=textwidth(text);
     setcolor(BLUE);
     setbkcolor(culoare);
+    setfillstyle(SOLID_FILL,culoare);
+   // floodfill(left+1,1,BLUE);
+    bar(left,0,right,40);
+    rectangle(left,0,right,40);
     settextstyle(3,0,2);
     setusercharsize(3,2,3,2);
     outtextxy(left+width/2-lung_text/2,height/3,text);
-    rectangle(left,0,right,40);
-    setfillstyle(SOLID_FILL,culoare);
-    floodfill(left+1,1,BLUE);
     settextstyle(3,0,0);
     setusercharsize(25,100,25,100);
 }
@@ -1084,7 +1085,7 @@ void deseneaza_butoane_left_right(int culoare, int nr)
         line(left_x+latura_left+d,left_y+latura_left/2,left_x+d,left_y);
         line(left_x+latura_left+d,left_y+latura_left/2,left_x+d,left_y+latura_left);
     }
-    setlinestyle(SOLID_LINE,1,0);
+    setlinestyle(SOLID_LINE,0,1);
 }
 
 void deseneaza_text(char text[], int caz=0, char mesaj[]="")
@@ -2967,8 +2968,8 @@ void deseneaza_triunghi(int x1, int y1, int x2, int y2, int x3, int y3)
 {
     setcolor(BLACK);
     line(x1,y1,x2,y2);
-    line(x3,y3,x2,y2);
     line(x1,y1,x3,y3);
+    line(x3,y3,x2,y2);
     setfillstyle(SOLID_FILL,LIGHTGRAY);
     floodfill(x1+(x3-x1)/2,y1+(y2-y1)/2,BLACK);
 
@@ -3048,8 +3049,8 @@ void desenare_setari()
 
 void init_setari()
 {
-    cleardevice();
     setbkcolor(fundal);
+    cleardevice();
     clearviewport();
     nr_butoane=1;
     incarca_preview();
@@ -3678,6 +3679,7 @@ void ecran5()
 void launch()
 {
     incarca_blocuri();
+    setlinestyle(SOLID_LINE,0,1);
 }
 
 int main()
