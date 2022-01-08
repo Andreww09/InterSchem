@@ -20,7 +20,7 @@
 #define FONT_SIZE 0
 #define distanta_max_leg 25
 #define NMAX 201
-#define NR_ERORI 20
+#define NR_ERORI 30
 #define max_zoom 8
 #define option_width 160
 #define option_height 22
@@ -92,8 +92,11 @@ int viteza=200;
 char mesaje_butoane[6][NMAX]= {"Inapoi","Salvare","Executa","Undo","Redo","Ajutor"};
 bool error[NR_ERORI];
 int indice_info,indice_undo;
-char mesaje_eroare[NR_ERORI][100]= {"Blocul % nu este legat\n","Blocul % nu are o expresie corecta\n","Programul nu este   legat la nici un bloc de tip stop\n",
-                                    "Programul nu are niciun bloc de tip start\n","Valoare gresita\n"
+ char mesaje_eroare[NR_ERORI][NMAX]= {"Programul nu este   legat la nici un bloc de tip stop\n",
+                                    "Programul nu are niciun bloc de tip start\n","Valoare gresita\n","Blocul % nu este legat\n","Blocul % nu are o expresie corecta\n","Expresia din blocul % are simboluri egale consecutive\n", "Expresia din blocul % nu se afla peste alfabetul corect\n", "Operatorii unari din blocul % nu sunt bine asociati\n",
+                                    "Expresia din blocul % nu este corect parantetizata\n", "Expresia din blocul % nu incepe sau se termina corect\n", "Expresia din blocul % nu poate sa contina doua puncte unul dupa altul\n", "O cifra cu virgula nu este corect scrisa in blocul % \n",
+                                    "Exista un operator  la finalul expresiei in blocul % \n", "Exista doua variabile una dupa alta in blocul % \n", "Exista doi operatori de acelasi fel unul langa altul in blocul % \n", "Operatie binara gresita in blocul & \n","Impartire la zero in blocul % \n",
+                                    "In blocul %, Operatiile binare pot fi doar numere intregi\n", "Operatie nedefinita in blocul % \n"
                                    };
 char mesaje_rezultat[3][100]= {"Variabila % are valoarea % ","Rezultatul blocului % este % "};
 int nr_setari=7;
@@ -112,6 +115,7 @@ void ecran1();
 void schimba_coord();
 void refacere_coord();
 void zoom_bloc();
+void number_to_text(int,char*);
 
 struct punct
 {
@@ -411,7 +415,10 @@ void deseneaza_decizie(int x, int y, char s[NMAX]="DECIZIE", int width=100, int 
     fillellipse(x+width/2,y,raza,raza);
     fillellipse(x,y+height,raza,raza);
     fillellipse(x+width,y+height,raza,raza);
-    outtextxy(x+width/2-lung_text/2,y+height/2,s1);
+    int adjust=0;
+    if(indice_zoom>4) adjust+=5;
+        else adjust-=2*(4-indice_zoom);
+    outtextxy(x+width/2-lung_text/2,y+height/2+adjust,s1);
 }
 
 void deseneaza_calcul(int x, int y, char s[NMAX]="CALCUL", int width=100, int height=50)
@@ -1120,11 +1127,8 @@ void deseneaza_text(char text[], int caz=0, char mesaj[]="")
     else   outtextxy(textbox.p1.x+10,textbox.p1.y,text);
     if(caz==0 || caz==3)
     {
-        if(caz==3)
-        {
-            setcolor(GREEN);
-            outtextxy(info_x+10,info_y+35,mesaj);
-        }
+        setcolor(BLACK);
+        outtextxy(info_x+10,info_y+35,mesaj);
         textbox.p2.y=textbox.p1.y+height;
         rectangle(textbox.p1.x,textbox.p1.y,textbox.p2.x,textbox.p2.y);
     }
@@ -1145,6 +1149,17 @@ bool apartine_text(int x,int y)
     return false;
 }
 
+void sterge_caseta_text()
+{
+        int height=2*textheight("W");
+        textbox.p1.x=info_x+10;
+        textbox.p2.x=info_x+300;
+        textbox.p1.y=info_y+50;
+        textbox.p2.y=textbox.p1.y+height;
+        setfillstyle(SOLID_FILL,fundal);
+        bar(textbox.p1.x,textbox.p1.y,textbox.p2.x,textbox.p2.y);
+}
+
 void citeste_text(int i)
 {
     char c,s[NMAX];
@@ -1154,7 +1169,7 @@ void citeste_text(int i)
     while(c!=13)
     {
         c=getch();
-        if(c==8 && n>0) n--,s[n]='\0',sterge_info();
+        if(c==8 && n>0) n--,s[n]='\0',sterge_caseta_text();
         if(!verifica_textbox(s))
         {
             continue;
@@ -1938,6 +1953,7 @@ void replace_var(int n, char text[])
 void afiseaza_erori()
 {
     //S.push({21,0});S.push({6110,1});
+    event=0;
     sterge_info();
     int j=indice_info;
     char aux[NMAX],text[NMAX];
@@ -1954,7 +1970,7 @@ void afiseaza_erori()
     else
     {
         int bloc=S[j].bloc,nr=S[j].nr;
-        if(nr<=1)
+        if(nr>=3)
         {
             char text1[NMAX];
             strcpy(text1,mesaje_eroare[S[j].nr]);
@@ -2034,7 +2050,7 @@ void afiseaza_rezultat()
 
 void verifica_erori_desen()
 {
-    if(start_main<6) S.push_back({0,3});
+    if(start_main<6) S.push_back({0,1});
     bool stop=0;
     for(int i=6; i<nr_blocuri; i++)
         if(a[i].tip!=0)
@@ -2056,9 +2072,9 @@ void verifica_erori_desen()
                 nr_total_leg=3;
                 if(a[i].dr!=-1) nr_leg++;
             }
-            if(nr_total_leg!=nr_leg && nr_leg!=0) S.push_back({i-5,0});
+            if(nr_total_leg!=nr_leg && nr_leg!=0) S.push_back({i-5,3});
         }
-    if(!stop) S.push_back({0,2});
+    if(!stop) S.push_back({0,0});
     if(S.size()) eroare=1;
 }
 
@@ -2185,7 +2201,10 @@ void salvare(int numar=-1,char numeVechi[]="")
             fwrite(&lenAnt,sizeof(int),1,fptr);
             list<int>::iterator iter;
             for(iter = a[i].ant.begin(); iter != a[i].ant.end(); iter++)
-                fwrite(&iter,sizeof(int),1,fptr);
+                {
+                    int val=*iter;
+                    fwrite(&val,sizeof(int),1,fptr);
+                }
         }
         fclose(fptr);
     }
@@ -2537,6 +2556,23 @@ void genereaza_mesaj(string& cod,set<int>& vizitate,int nod)
     }
 }
 
+bool apartine_stiva(int i, stack<int> S)
+{
+    stack<int> aux;
+    bool ok=0;
+    while(!S.empty())
+    {
+        int x=S.top(); S.pop();
+        if(x==i) ok=1;
+        aux.push(x);
+    }
+    while(!aux.empty())
+    {
+        S.push(aux.top());
+        aux.pop();
+    }
+    return ok;
+}
 
 void executa()
 {
@@ -2548,14 +2584,15 @@ void executa()
 
     while(a[i].tip!=1 && !eroare)
     {   //cout<<"Q  "<<i<<'\n';
+        eroare=0;
         int i1=i;
         if(a[i1].ok)
             marcheaza_bloc(i1);
         delay(viteza);
         if(strcmp(a[i].text,"")==0)
         {
-            S.push_back({i-5,1});
-            eroare=1;
+            S.push_back({i-5,4});
+            eroare=-1;
         }
         else if(a[i].tip>1)
             rez=evalueazaExpresie(a[i].text);
@@ -2585,7 +2622,7 @@ void executa()
                         sterge_info();
                         if(verifica_text_cin(a[NMAX-9].text))
                             text_to_number(variabile[aux[nr-1]-'a'],a[NMAX-9].text);
-                        else eroare=1,S.push_back({0,4});
+                        else eroare=1,S.push_back({0,2});
                     }
                     poz=variabile_iesire(aux+nr);
                     //cout<<poz<<' '<<nr<<'\n';
@@ -2593,9 +2630,12 @@ void executa()
             }
             if(a[i].st!=-1)
                 {
-                    if(rez)
+                    if(a[i].tip==4)
+                    {
+                        if(rez)
                         {
-                            if(a[i].tip==4) rad.push(i);
+                            if(!apartine_stiva(i,rad))
+                                rad.push(i);
                             i=a[i].st;
                             if(a[i].tip==1 && !rad.empty())
                                 {
@@ -2603,7 +2643,7 @@ void executa()
                                     rad.pop();
                                 }
                         }
-                    else if(a[i].tip==4)
+                    else
                     {
                         if(a[i].dr!=-1)
                             {
@@ -2612,11 +2652,13 @@ void executa()
                             }
                         else eroare=1;
                     }
+                    }
+                    else i=a[i].st;
                 }
             else eroare=1;
         }
-        ///else S.push_back({i-5,eroare});
-       if(a[i1].ok)
+        else if(eroare!=-1){ S.push_back({i-5,eroare});cout<<"Q"<<i-5<<' '<<eroare<<"Q\n";}
+        if(a[i1].ok)
             marcheaza_bloc(i1,color);
     }
     if(a[i].tip==1 && a[i].ok)
@@ -2625,7 +2667,8 @@ void executa()
         delay(viteza);
         marcheaza_bloc(i,color);
     }
-    if(!eroare) rezult=1,event=0;
+    if(S.empty()) rezult=1,event=0;
+    else eroare=1,event=0;
     cout<<eroare<<' ';
     string cod;
     set<int> vizitate;
@@ -2635,6 +2678,7 @@ void executa()
 
     genereaza_mesaj(cod,vizitate,start_main);
     if(rezult==1) eroare=0;
+    cout<<"Q"<<eroare<<' '<<rezult<<"Q\n";
     cout<<'\n'<<'\n'<<cod;
 
 }
@@ -2740,8 +2784,8 @@ void afiseaza_text_ajutor()
     outtextxy(a[i].x,a[i].y+100,"Noduri inferioare");
     outtextxy(50,530,"Selectati si plasati un bloc pentru a-l adauga in schema (Click dreapta pentru a anula)");
     outtextxy(70,550,"Blocurile Start si Stop nu pot fi modificate");
-    outtextxy(70,570,"Blocul decizie va evalua expresia si va returna o valoare de adevar, daca expresia este ");
-    outtextxy(50,590,"adevarata, executia va continua prin legatura din stanga, altfel va continua prin dreapta");
+    outtextxy(70,570,"Blocul decizie va evalua expresia si va returna o valoare de adevar, daca expresia este adevarata, executia");
+    outtextxy(50,590,"va continua prin legatura din stanga, apoi prin dreapta, altfel va continua doar prin dreapta");
     outtextxy(70,610,"Blocul intrare poate primi doar variabile separate prin virgula");
     outtextxy(70,630,"Blocul iesire poate primi variabile sau expresii separate prin virgula si va afisa rezultatul in zona informatii");
     outtextxy(70,650,"Blocul calcul poate primi variabile sau expresii separate prin virgula");
@@ -3227,7 +3271,13 @@ void ecran1()
 
         if(selectat>5)
         {
-            if(a[selectat].tip>1) deseneaza_text(a[selectat].text);
+            if(a[selectat].tip>1)
+            {
+                char aux[10],text[20]="Blocul ";
+                number_to_text(selectat,aux);
+                strcat(text,aux);
+                deseneaza_text(a[selectat].text,0,text);
+            }
             if(ismouseclick(WM_RBUTTONDOWN))
             {
                 click_dreapta_pe_bloc();
