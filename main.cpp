@@ -1995,7 +1995,11 @@ void afiseaza_erori()
     strcat(text,"/");
     number_to_text(S.size(),aux);
     strcat(text,aux);
-    if(S[j].bloc==0)
+    if(S[j].bloc==-1)
+    {
+        deseneaza_text("Nu pot exista doua blocuri de tip start",1,text);
+    }
+    else if(S[j].bloc==0)
     {
         deseneaza_text(mesaje_eroare[S[j].nr],1,text);
     }
@@ -3187,12 +3191,22 @@ void click_stanga() /// click stanga pentru a plasa blocuri si pentru a adauga b
             }
             if(bloc_nou==0)
             {
+                if(start_main>5)
+                {
+                    S.push_back({-1,0});
+                    eroare=1;
+                    afiseaza_erori();
+                    event=1;
+                }
+                else
+                {
                 adauga_undo();
                 undo.push_back({1,nr_blocuri});
                 start_main=nr_blocuri;
                 a[nr_blocuri]= {bloc_nou,1,x,y};
                 a[nr_blocuri].x1=x1;
                 a[nr_blocuri++].y1=y1;
+                }
             }
             else if(bloc_nou<=5)
             {
