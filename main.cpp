@@ -19,7 +19,7 @@
 #define FONT_STYLE DEFAULT_FONT
 #define FONT_SIZE 0
 #define distanta_max_leg 25
-#define NMAX 201
+#define NMAX 501
 #define NR_ERORI 30
 #define max_zoom 8
 #define option_width 160
@@ -29,43 +29,51 @@
 #define max_x_ecran 12000
 #define min_y_ecran 0
 #define max_y_ecran 6000
+
 /// zona unde pot fi puse blocurile
 #define colt_x 0
 #define colt_y 50
 #define lungime 1200
 #define inaltime 600
+
 ///coordonatele butoanelor de zoom
 #define minus_x 1000
 #define minus_y 670
 #define plus_x 1100
 #define plus_y 670
 #define latura_zoom 20
+
 ///coordonatele butoanelor viteza executie
 #define minusV_x 1220
 #define minusV_y 630
 #define plusV_x 1470
 #define plusV_y 630
 #define latura_v 20
+
 ///coordonatele butoanelor left-right de eroare
 #define left_x 1450
 #define left_y 90
 #define latura_left 20
 #define dist_left 40
+
 ///coordonatele butonului pentru codul c++
 #define cod_x 1250
 #define cod_y 500
 #define cod_width 230
 #define cod_height 40
+
 ///zona de informatii
 #define info_x 1200
 #define info_y 50
 #define info_width 400
 #define info_height 100
 #define max_text_height 75
+
 ///
 #define set_raza 10
-#define set_dist 10
+//#define set_dist 10
 #define set_nod_x 280
+
 /// culorile folosite
 #define nr_culori 15
 #define nr_limbaje 2
@@ -80,11 +88,8 @@ int ecrane[11]; // Numarul de ecrane al programului
 int nrOptiuni;  //Cate optiuni are meniul ( poate fi modificat prin apelarea de un numar dorit de ori a functiei creeazaOptiune )
 int ecranCurent; //Ecranul deschis in acest moment
 
-int nr_blocuri=6,bloc_nou=-1,selectat=-1,raza=7,dist_leg=distanta_max_leg,distanta_intre_blocuri=20;
+int nr_blocuri=6,bloc_nou=-1,selectat=-1,raza=7,dist_leg=distanta_max_leg,distanta_intre_blocuri=20,continuare = 0,start_main=0, nod_dest=-1,nod_st=-1,nod_dr=-1;;
 bool event=1,options=0,ecran_schimbat=1,rezult;
-int continuare = 0;
-int start_main=0;
-int nod_dest=-1,nod_st=-1,nod_dr=-1;
 int culori_butoane[6]= {COLOR(249,5,5),COLOR(250,255,77),COLOR(95,255,77),LIGHTBLUE,COLOR(46,255,193),COLOR(46,165,255)},nr_butoane=6;
 int zoom_ratio=5,indice_zoom=4; /// zoom_ratio=5 va insemna 1/5 adica 20%
 int ecran_x,ecran_y;
@@ -92,15 +97,17 @@ int viteza=200;
 char mesaje_butoane[6][NMAX]= {"Inapoi","Salvare","Executa","Undo","Redo","Ajutor"};
 bool error[NR_ERORI];
 int indice_info,indice_undo;
- char mesaje_eroare[NR_ERORI][NMAX]= {"Programul nu este legat la nici un bloc de tip stop\n",
-                                    "Programul nu are niciun bloc de tip start\n","Valoare gresita\n","Blocul % nu este legat\n","Blocul % nu are o expresie corecta\n","Expresia din blocul % are simboluri egale consecutive\n", "Expresia din blocul % nu se afla peste alfabetul corect\n", "Operatorii unari din blocul % nu sunt bine asociati\n",
-                                    "Expresia din blocul % nu este corect parantetizata\n", "Expresia din blocul % nu incepe sau se termina corect\n", "Expresia din blocul % nu poate sa contina doua puncte unul dupa altul\n", "O cifra cu virgula nu este corect scrisa in blocul % \n",
-                                    "Exista un operator  la finalul expresiei in blocul % \n", "Exista doua variabile una dupa alta in blocul % \n", "Exista doi operatori de acelasi fel unul langa altul in blocul % \n", "Operatie binara gresita in blocul % \n","Impartire la zero in blocul % \n",
-                                    "In blocul %, Operatiile binare pot fi doar numere intregi\n", "Operatie nedefinita in blocul % \n", "Operatorii de incrementare/decrementare nu are o variabila acociata in blocul % \n", "Expresia necesita un lvalue in blocul % \n", "Virgula nu poate sa apara la inceput in blocul % \n","Expresia are un operator la inceput in blocul % \n"
-                                   };
+char mesaje_eroare[NR_ERORI][NMAX]= {"Programul nu este   legat la nici un bloc de tip stop\n",
+                                     "Programul nu are niciun bloc de tip start\n","Valoare gresita\n","Blocul % nu este legat\n","Blocul % nu are o expresie corecta\n","Expresia din blocul % are simboluri egale consecutive\n", "Expresia din blocul % nu se afla peste alfabetul corect\n", "Operatorii unari din blocul % nu sunt bine asociati\n",
+                                     "Expresia din blocul % nu este corect parantetizata\n", "Expresia din blocul % nu incepe sau se termina corect\n", "Expresia din blocul % nu poate sa contina doua puncte unul dupa altul\n", "O cifra cu virgula nu este corect scrisa in blocul % \n",
+                                     "Exista un operator  la finalul expresiei in blocul % \n", "Exista doua variabile una dupa alta in blocul % \n", "Exista doi operatori de acelasi fel unul langa altul in blocul % \n", "Operatie binara gresita in blocul % \n","Impartire la zero in blocul % \n",
+                                     "In blocul %, Operatiile binare pot fi doar numere intregi\n", "Operatie nedefinita in blocul % \n", "Operatorii de incrementare/decrementare nu are o variabila acociata in blocul % \n", "Expresia necesita un lvalue in blocul % \n", "Virgula nu poate sa apara la inceput in blocul % \n","Expresia are un operator la inceput in blocul % \n"
+                                     ,"Paranteza nu are continut in blocul % \n", "Blocul % citire nu poate citi aceleasi doua variabile in acelasi timp \n", "Exista variabile de lungime mai mare de 2 in blocul % \n", "Virgulele nu respecta regulile de sintaxa in blocul % \n"
+                                     , "Apar simboluri invalide in blocul % \n"
+                                    };
 char mesaje_rezultat[3][100]= {"Variabila % are valoarea % ","Rezultatul blocului % este % "};
 int nr_setari=7;
-char mesaje_limbaje[4][NMAX]={"C/C++","JAVA"};
+char mesaje_limbaje[4][NMAX]= {"C/C++","JAVA"};
 char mesaje_setari[9][NMAX]= {"CULOARE FUNDAL","CULOARE BLOCURI","CULOARE NODURI","CULOARE LEGATURI","CULOARE TEXT","CULOARE BLOCURI","LIMBAJ","IN TIMPUL EXECUTIEI"};
 //int culori[11]={COLOR(),COLOR(),COLOR(),COLOR(),COLOR(),COLOR(),COLOR(),COLOR(),COLOR(),COLOR()};
 int culori[20]= {0x330033,0xFFFFFF,0xF00000,0xFF8000,0xFFFF33,0x66FFB2,0x009900,0x33FFFF,0x99FF99,COLOR(76,0,153),0x6666FF,0x0080FF,0x3333FF,0x7F00FF,COLOR(178,103,252),COLOR(153,51,255)};
@@ -109,14 +116,11 @@ int indice_culori[8]= {1,5,6,12,0,9,0};
 char fisiere[20][NMAX];
 int fisier_curent=-1,nr_fisiere = 0;
 int nr_fisier[20];
-char cod[20][NMAX] = {{'\0'}};
-int linieCod;
-int indexCaracter;
-int linieCaracter;
-int cursorPozitie;
+char cod[100][NMAX] = {{'\0'}};
+int linieCod,indexCaracter,linieCaracter,cursorPozitie;
 char codCorect[1000];
 bool executat=0;
-
+int depth = 0;
 
 void zoom_bloc(int,int);
 void ecran1();
@@ -142,9 +146,6 @@ struct dreptunghi
     int midx,midy;
 } textbox;
 
-
-
-
 //Structura unei optiuni din meniu
 struct optiune
 {
@@ -167,9 +168,10 @@ vector<erori> S;
 
 struct afisari
 {
-    int bloc,nr,val;    // nr=1 inseamna ca se afiseaza doar un rezultat, nr=0 inseamna ca se va afisa si numele variabilei, nr=-1 inseamna mesaj simplu
+    int bloc,nr; // nr=1 inseamna ca se afiseaza doar un rezultat, nr=0 inseamna ca se va afisa si numele variabilei, nr=-1 inseamna mesaj simplu
+    float val;
     char var;
-    afisari(int a, int b, int c, char d='0' )
+    afisari(int a, int b, float c, char d='0' )
     {
         bloc=a;
         nr=b;
@@ -179,8 +181,6 @@ struct afisari
 };
 vector<afisari> Rezultat;
 
-
-
 struct blocuri
 {
     int tip,nr;
@@ -188,10 +188,10 @@ struct blocuri
     double x1,y1;   // coordonatele blocului daca nu ar avea zoom
     int width=100,height=50;
     int w1=100,h1=50;
-    char text[201];
+    char text[NMAX];
     bool ok=0;
     int st=-1,dr=-1;
-    bool bucla;
+    int bucla;
     list<int> ant;      // nodurile care intra in blocul curent
     blocuri(int a=0,int b=0,int c=0,int d=0,char s[NMAX]="")
     {
@@ -209,7 +209,6 @@ struct blocuri
 blocuri a[NMAX];
 
 #include "genereazaSchema.h"
-
 
 struct schimbari
 {
@@ -236,6 +235,19 @@ struct schimbari
 };
 vector<schimbari> undo;
 
+bool esteSirDeCaractere(char sir[])
+{
+    int i = 0, j = strlen(sir) - 1, n = strlen(sir);
+    while(i < n-1 && sir[i] == ' ')
+        i++;
+    while(j > 0 && sir[j] == ' ')
+        j--;
+
+    if(j - i == 2 && sir[i] == '\'' && sir[j] == '\'')
+        return true;
+
+    return sir[i] == '"' && sir[j] == '"';
+}
 
 void listFile(char v[][NMAX],int& n)
 {
@@ -254,10 +266,12 @@ void listFile(char v[][NMAX],int& n)
     }
 }
 
-int nextFileName(int& cifre)
+
+int nextFileName(int& cifre) // retuneaza urmatorul numar care nu apare in numele sablou din folderul salvate si numar de cifre al acestuia
 {
     DIR *pDIR;
     struct dirent *entry;
+
     vector<int> numere;
     char base[] = "schema";
     int numarLipsa = 0,p = 10;
@@ -266,15 +280,11 @@ int nextFileName(int& cifre)
     if( pDIR=opendir("salvate") )
     {
         while(entry = readdir(pDIR))
-        {
-
-
-            if( strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0 )
+            if(strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0 ) // parent directory
             {
-                int nr = 0,ok = 1;
-                cout<<entry->d_name<<endl;
+                int nr = 0,ok = 1,i;
                 int len = strlen(entry->d_name);
-                int i;
+
                 for(i=0; i<len && i<6; i++)
                     if(base[i] != entry->d_name[i])
                         ok = 0;
@@ -285,17 +295,18 @@ int nextFileName(int& cifre)
                     else
                         nr = nr * 10 + entry->d_name[i] - '0';
 
-                if(i < len && entry->d_name[i] != '.' || i+1 < len && entry->d_name[i+1] != 't' || i+2 < len && entry->d_name[i+2] != 'x' || i+3 < len && entry->d_name[i+3] != 't' || i+4 != len)
+                if(i < len && entry->d_name[i] != '.' || i+4 != len || entry->d_name[i+1] != 't' || entry->d_name[i+2] != 'x' || entry->d_name[i+3] != 't' )
                     ok = 0;
 
                 if(ok)
                     numere.push_back(nr);
             }
 
-        }
         closedir(pDIR);
     }
+
     sort(numere.begin(),numere.end());
+
     for(int i=0; i<numere.size(); i++)
     {
         if(numere[i] != numarLipsa)
@@ -311,11 +322,19 @@ int nextFileName(int& cifre)
     return numarLipsa;
 }
 
-
-
 void deseneaza_start(int x, int y, char s[NMAX]="START", int width=100, int height=50)
 {
     int lung_text=textwidth(s);
+    char s1[NMAX];
+    strcpy(s1,s);
+    setbkcolor(color);
+    if(lung_text>width-10)
+    {
+        int n=(width-10)/textwidth("M");
+        s1[n]='\0';
+        strcat(s1,"...");
+        lung_text=textwidth(s1);
+    }
     setbkcolor(color);
     setcolor(text_color);
     rectangle(x,y,x+width,y+height);
@@ -324,13 +343,23 @@ void deseneaza_start(int x, int y, char s[NMAX]="START", int width=100, int heig
     circle(x+width/2,y+height,raza);
     setfillstyle(SOLID_FILL,nod_color);
     fillellipse(x+width/2,y+height,raza,raza);
-    outtextxy(x+width/2-lung_text/2,y+height/2-textheight("W")/2,s);
+    outtextxy(x+width/2-lung_text/2,y+height/2-textheight("W")/2,s1);
 }
 
 
 void deseneaza_stop(int x, int y, char s[NMAX]="STOP", int width=100, int height=50)
 {
     int lung_text=textwidth(s);
+    char s1[NMAX];
+    strcpy(s1,s);
+    setbkcolor(color);
+    if(lung_text>width-10)
+    {
+        int n=(width-10)/textwidth("M");
+        s1[n]='\0';
+        strcat(s1,"...");
+        lung_text=textwidth(s1);
+    }
     setbkcolor(color);
     setcolor(text_color);
     rectangle(x,y,x+width,y+height);
@@ -339,9 +368,8 @@ void deseneaza_stop(int x, int y, char s[NMAX]="STOP", int width=100, int height
     circle(x+width/2,y,raza);
     setfillstyle(SOLID_FILL,nod_color);
     fillellipse(x+width/2,y,raza,raza);
-    outtextxy(x+width/2-lung_text/2,y+height/2-textheight("W")/2,s);
+    outtextxy(x+width/2-lung_text/2,y+height/2-textheight("W")/2,s1);
 }
-
 void deseneaza_intrare(int x, int y, char s[NMAX]="INTRARE", int width=100, int height=50)
 {
     int dist=width/5,lung_text=textwidth(s);
@@ -426,7 +454,7 @@ void deseneaza_decizie(int x, int y, char s[NMAX]="DECIZIE", int width=100, int 
     fillellipse(x+width,y+height,raza,raza);
     int adjust=0;               // se muta textul mai sus sau mai jos in functie de zoom
     if(indice_zoom>4) adjust+=5;
-        else adjust-=2*(4-indice_zoom);
+    else adjust-=2*(4-indice_zoom);
     outtextxy(x+width/2-lung_text/2,y+height/2+adjust,s1);
 }
 
@@ -594,8 +622,6 @@ void verifica_butoane(int x, int y) // se verifica blocurile de jos
 {
     for(int i=0; i<=5; i++)
         if(verifica_bloc(x,y,i)) bloc_nou=a[i].tip;
-
-
 }
 
 void adauga_undo()
@@ -680,14 +706,14 @@ void sterge(int i, int ind=-1)
 void sterge_legatura(int i, int j, bool dr)
 {
     if(dr) a[i].dr=-1;
-        else a[i].st=-1;
+    else a[i].st=-1;
     a[j].ant.remove(i);
 }
 
 void adauga_legatura(int i, int j, bool dr)
 {
     if(dr) a[i].dr=j;
-        else a[i].st=j;
+    else a[i].st=j;
     a[j].ant.push_back(i);
 }
 
@@ -839,7 +865,7 @@ void zoom(int semn, int nr )
 void verifica_zoom(int x, int y)
 {
     refacere_coord();
-    if(apartine_dreptungi(x,y,minus_x,minus_y,latura_zoom,latura_zoom) && indice_zoom>1)
+    if(apartine_dreptungi(x,y,minus_x,minus_y,latura_zoom,latura_zoom) && indice_zoom>2)
     {
         indice_zoom--;
         raza--;
@@ -929,26 +955,14 @@ void obtine_cod()
 {
     FILE *fptr;
     char nume[50];
-    if(!executat) return ;
-
-    if(strlen(codCorect) == 0)
-        return ;
+    if(!executat || eroare || strlen(codCorect) == 0) return ;
 
     if(limbaj == 0) // C/C++
-    {
         strcpy(nume,"schemaMain.cpp");
-        fptr = fopen(nume,"w");
-    }
     else if(limbaj == 1) // Java
-    {
         strcpy(nume,"schemaMain.java");
-        fptr = fopen(nume,"w");
-    }
-    /*else
-    {
-        strcpy(nume,"schemaMain.py");
-        fptr = fopen(nume,"w");
-    }*/
+
+    fptr = fopen(nume,"w");
     fprintf(fptr,"%s",codCorect);
     fclose(fptr);
     system(nume);
@@ -964,10 +978,12 @@ void desenare_buton_cod()
 {
     setcolor(BLACK);
     setbkcolor(cod_color);
+    setfillstyle(SOLID_FILL,cod_color);
+    bar(cod_x,cod_y,cod_x+cod_width,cod_y+cod_height);
     rectangle(cod_x,cod_y,cod_x+cod_width,cod_y+cod_height);
     outtextxy(cod_x+10,cod_y+cod_height/3,"OBTINERE COD");
-    setfillstyle(SOLID_FILL,cod_color);
-    floodfill(cod_x+1,cod_y+1,BLACK);
+    //setfillstyle(SOLID_FILL,cod_color);
+    //floodfill(cod_x+1,cod_y+1,BLACK);
 }
 
 void verifica_mutare_ecran()
@@ -986,8 +1002,6 @@ void verifica_mutare_ecran()
             schimba_coord();
         }
     }
-
-
 }
 
 void deseneaza_meniu()
@@ -995,7 +1009,6 @@ void deseneaza_meniu()
     int width=getmaxwidth()/nr_butoane;
     for(int i=0; i<nr_butoane; i++)
         desenare_buton(i*width,(i+1)*width,culori_butoane[i],mesaje_butoane[i]);
-
 }
 
 void desenare_margine()
@@ -1011,12 +1024,12 @@ void desenare_margine()
 
 void incarca_blocuri()
 {
-        a[0]= {0,0,50,710,"START"};
-        a[1]= {1,0,200,710,"STOP"};
-        a[2]= {2,0,350,710,"INTRARE"};
-        a[3]= {3,0,500,710,"IESIRE"};
-        a[4]= {4,0,650,710,"DECIZIE"};
-        a[5]= {5,0,800,710,"CALCUL"};
+    a[0]= {0,0,50,710,"START"};
+    a[1]= {1,0,200,710,"STOP"};
+    a[2]= {2,0,350,710,"INTRARE"};
+    a[3]= {3,0,500,710,"IESIRE"};
+    a[4]= {4,0,650,710,"DECIZIE"};
+    a[5]= {5,0,800,710,"CALCUL"};
 }
 
 void init()
@@ -1033,6 +1046,7 @@ void init()
         ecran_x=min_x_ecran;
         ecran_y=min_y_ecran;
     }
+
     continuare=1;
     setbkcolor(fundal);
     clearviewport();
@@ -1065,6 +1079,7 @@ bool apartine_left_right(int x, int y)  // butoanele din informatii prin care se
     if(apartine_dreptungi(x,y,left_x+d,left_y,latura_left,latura_left))
     {
         if(eroare) nr=S.size()-1;
+        else nr=Rezultat.size()-1;
         indice_info=min(indice_info+1,nr);
         return true;
     }
@@ -1148,13 +1163,13 @@ bool apartine_text(int x,int y)
 
 void sterge_caseta_text()
 {
-        int height=2*textheight("W");
-        textbox.p1.x=info_x+10;
-        textbox.p2.x=info_x+300;
-        textbox.p1.y=info_y+50;
-        textbox.p2.y=textbox.p1.y+height;
-        setfillstyle(SOLID_FILL,fundal);
-        bar(textbox.p1.x,textbox.p1.y,textbox.p2.x,textbox.p2.y);
+    int height=2*textheight("W");
+    textbox.p1.x=info_x+10;
+    textbox.p2.x=info_x+300;
+    textbox.p1.y=info_y+50;
+    textbox.p2.y=textbox.p1.y+height;
+    setfillstyle(SOLID_FILL,fundal);
+    bar(textbox.p1.x,textbox.p1.y,textbox.p2.x,textbox.p2.y);
 }
 
 void citeste_text(int i)
@@ -1300,7 +1315,7 @@ void aducere_in_plan(punct &pStart, punct &pStop)
     pStop.y=min(colt_y+inaltime,pStop.y);
 }
 
-bool testLinie(linie l,int px)
+bool testLinie(linie l,int px) // testeaza linia daca se afla la margini, px este o valoare mica ce face diferenta intre coordonate din ecranul principal si ecranul invizibil
 {
     px = abs(px);
     return !(l.p1.x <= px && l.p2.x <= px || l.p1.y <= colt_y+px && l.p2.y <= colt_y+px || l.p1.x >= colt_x + lungime && l.p2.x >= colt_x + lungime || l.p1.y >= colt_y + inaltime && l.p2.y >= colt_y + inaltime );
@@ -1309,19 +1324,19 @@ bool testLinie(linie l,int px)
 void trasareLinie(linie l,int px)
 {
     aducere_in_plan(l.p1,l.p2);
-    if(testLinie(l,px))
-    {
+    if(testLinie(l,px)) // trasam linia doar daca este vizibila in ecran
         line(l.p1.x,l.p1.y,l.p2.x,l.p2.y);
-    }
+
 }
 
-int trasareLinie(int a,int b,int c,int d,int px)
+int trasareLinie(int a,int b,int c,int d,int px) // trasarea unor linii folosita pentru procedura trageSageata
 {
     linie l;
     l.p1.x = a;
     l.p1.y = b;
     l.p2.x = c;
     l.p2.y = d;
+    aducere_in_plan(l.p1,l.p2);
     if(testLinie(l,px))
     {
         line(l.p1.x,l.p1.y,l.p2.x,l.p2.y);
@@ -1334,40 +1349,45 @@ void trasareSageata(linie l,int tip)
 {
     int midx = (l.p1.x + l.p2.x) / 2;
     int midy = (l.p1.y + l.p2.y) / 2;
-    int lungimeX = abs(l.p1.x-l.p2.x);
-    int lungimeY = abs(l.p1.y-l.p2.y);
-    int px = a[6].width / 20;
 
-    if(tip == 1)
+    int lungimeX = abs(l.p1.x-l.p2.x); // lungimea pe orizontala
+    int lungimeY = abs(l.p1.y-l.p2.y); // lungimea pe verticala
+
+    int px = a[6].width / 20; // valoare relativa la dimensiunea celorlalte blocuri
+
+    if(tip == 1) // sageata spre dreapta sau in jos
     {
-        if(lungimeX <= 15)
+        if(lungimeX <= 15) // daca i o linie foarte mica atunci nu i mai trasam sagetile
             return ;
-        if(l.p1.x <= l.p2.x)
+
+        if(l.p1.x < l.p2.x) // linie de la stanga spre dreapta
         {
             int ok = trasareLinie(midx,midy,midx-px,midy-px,px);
+
             if(ok)
                 trasareLinie(midx,midy,midx-px,midy+px,px);
 
         }
-        else
+        else // linie in jos
         {
             int ok = trasareLinie(midx,midy,midx+px,midy+px,px);
+
             if(ok)
                 trasareLinie(midx,midy,midx+px,midy-px,px);
         }
     }
-    else
+    else // sageata spre stanga sau in sus
     {
-        if(lungimeY <= 15)
+        if(lungimeY <= 15)  // daca i o linie foarte mica atunci nu o mai trasam
             return;
-        if(l.p1.y <= l.p2.y)
+        if(l.p1.y < l.p2.y) // linie in sus
         {
             int ok = trasareLinie(midx,midy,midx-px,midy-px,px);
             if(ok)
                 trasareLinie(midx,midy,midx+px,midy-px,px);
 
         }
-        else
+        else // linie spre stanga
         {
             int ok = trasareLinie(midx,midy,midx+px,midy+px,px);
             if(ok)
@@ -1376,7 +1396,7 @@ void trasareSageata(linie l,int tip)
     }
 }
 
-bool punctInterior(linie& l,int i)
+bool punctInterior(linie& l,int i) // folosit pentru detectarea unei linii care se termina intr-un bloc
 {
     return (a[i].x <= l.p2.x && l.p2.x <= a[i].x+a[i].width && a[i].y <= l.p2.y && l.p2.y <= a[i].y+a[i].height);
 }
@@ -1444,11 +1464,10 @@ void ocolireVerticalaDesteapta(linie& l1,int i,linie* next,int px,int y)
             l1.p2.x = a[i].x - px;
         else
             l1.p2.x = a[i].x + px;
+    else if(px > 0)
+        l1.p2.x = a[i].x + a[i].width + px;
     else
-        if(px > 0)
-            l1.p2.x = a[i].x + a[i].width + px;
-        else
-            l1.p2.x = a[i].x + a[i].width - px;
+        l1.p2.x = a[i].x + a[i].width - px;
     trasareLinie(l1,px); // trasam a doua parte, pana ce ocolim pe orizontala
     trasareSageata(l1,1);
 
@@ -1477,11 +1496,10 @@ void ocolireOrizontal(linie& l,linie& aux,int px,int i)
             aux.p2.y = a[i].y - px;
         else
             aux.p2.y = a[i].y + a[i].height + px;
+    else if(l.p1.y <= a[i].y + a[i].height / 2)
+        aux.p2.y = a[i].y + px;
     else
-        if(l.p1.y <= a[i].y + a[i].height / 2)
-            aux.p2.y = a[i].y + px;
-        else
-            aux.p2.y = a[i].y + a[i].height - px;
+        aux.p2.y = a[i].y + a[i].height - px;
 
     trasareLinie(aux,px);
     trasareSageata(aux,2);
@@ -1523,11 +1541,10 @@ void ocolireOrizontalaDesteapta(linie& l1,int i,linie* next,int px,int x)
             l1.p2.y = a[i].y + px;
         else
             l1.p2.y = a[i].y - px;
+    else if(px < 0)
+        l1.p2.y = a[i].y + a[i].height - px;
     else
-        if(px < 0)
-            l1.p2.y = a[i].y + a[i].height - px;
-        else
-            l1.p2.y = a[i].y + a[i].height + px;
+        l1.p2.y = a[i].y + a[i].height + px;
 
     trasareLinie(l1,px); // trasam a doua parte, pana ce ocolim pe orizontala
     trasareSageata(l1,2);
@@ -1634,7 +1651,7 @@ void trasareOrizontal(linie& l,linie* next,int nod1,int nod2)
     else // daca nu are punct interior atunci il ocolim ca celelalte blocuri
     {
         ocolireOrizontal(l,aux,px,v[len]);
-         aux2.p1.x = aux.p2.x, aux2.p1.y = aux.p2.y, aux2.p2.x = l.p2.x, aux2.p2.y = l.p2.y;
+        aux2.p1.x = aux.p2.x, aux2.p1.y = aux.p2.y, aux2.p2.x = l.p2.x, aux2.p2.y = l.p2.y;
         trasareLinie(aux2,px); // il legam cu punctul in care ar trebui sa ajunga linia
     }
     l.p1 = l.p2;
@@ -1645,16 +1662,17 @@ void trasare_legatura(int nod1,int nod2,int tip,int dr)
     blocuri n1=a[nod1],n2=a[nod2];
     punct pStart,pStop;  // punctele de inceput si final
     setcolor(line_color);
+
     linie l[5],aux, aux1, aux2; // legatura este impartita in mai multe linii orizontale/verticale
 
     aux1.p1.x = a[nod1].x;
-    aux1.p1.y = a[nod1].x + a[nod1].width;
-    aux1.p2.x = a[nod1].y;
+    aux1.p1.y = a[nod1].y;
+    aux1.p2.x = a[nod1].x + a[nod1].width;
     aux1.p2.y = a[nod1].y + a[nod1].height;
 
     aux2.p1.x = a[nod2].x;
-    aux2.p1.y = a[nod2].x + a[nod2].width;
-    aux2.p2.x = a[nod2].y;
+    aux2.p1.y = a[nod2].y;
+    aux2.p2.x = a[nod2].x + a[nod2].width;
     aux2.p2.y = a[nod2].y + a[nod2].height;
 
     aducere_in_plan(aux1.p1,aux1.p2);
@@ -1682,8 +1700,9 @@ void trasare_legatura(int nod1,int nod2,int tip,int dr)
 
     // coordonate folosite pentru a detecta cazul in care blocul destinatie se afla strict deasupra blocului sursa
     // cx1,cx2 reprezinta segmentul aflat la baza nodului sursa, iar cy1,cy2 reprezinta segmentul aflat la baza nodului destinatie
-    int cx1 = aux1.p1.x, cx2 = aux1.p1.y;
-    int cy1 = aux2.p1.x, cy2 = aux2.p1.y;
+    int cx1 = aux1.p1.x, cx2 = aux1.p2.x;
+    int cy1 = aux2.p1.x, cy2 = aux2.p2.x;
+
 
     if(!a[nod1].ok && !a[nod2].ok && a[nod1].x < 0 && a[nod2].x < 0) // daca ambele noduri nu mai sunt deloc vizibile, inclusiv legatura lor
         return ;
@@ -1729,7 +1748,8 @@ void trasare_legatura(int nod1,int nod2,int tip,int dr)
         if(pStop.x <= pStart.x)
             l[1].p2.x = min(aux1.p1.x,aux2.p1.x) - px;
         else
-            l[1].p2.x = max(aux1.p1.y,aux2.p1.y) + px;
+            l[1].p2.x = max(aux1.p2.x,aux2.p2.x) + px;
+
         l[1].p2.y = l[0].p2.y;
 
         l[2].p1 = l[1].p2;
@@ -1749,7 +1769,7 @@ void trasare_legatura(int nod1,int nod2,int tip,int dr)
         if(pStop.x <= pStart.x)
             aux.p2.x = min(aux1.p1.x,aux2.p1.x) - px;
         else
-            aux.p2.x = max(aux1.p1.y,aux2.p1.y) + px;
+            aux.p2.x = max(aux1.p2.x,aux2.p2.x) + px;
         aux.p2.y =  l[0].p2.y;;
 
         trasareOrizontal(aux,&l[2],nod1,nod2);
@@ -1767,7 +1787,7 @@ void trasare_legatura(int nod1,int nod2,int tip,int dr)
     }
     else
     {
-        int dist = abs((min(aux1.p1.y,aux2.p1.y) + max(aux1.p1.x, aux2.p1.x)) / 2 );
+        int dist = abs((min(aux1.p2.x,aux2.p2.x) + max(aux1.p1.x, aux2.p1.x)) / 2 );
 
         l[0].p1 = pStart;
         l[0].p2.x = pStart.x;
@@ -1904,9 +1924,13 @@ void inapoi()
 
 void text_to_number(float &n, char* s)
 {
+    bool negativ=0;
+    int i=0;
+    if(s[0]=='-') negativ=1,i++;
     n=0;
-    for(int i=0; i<strlen(s); i++)
+    for( ;i<strlen(s); i++)
         n=n*10+s[i]-'0';
+    if(negativ) n*=-1;
 }
 
 void number_to_text(int n, char* s)
@@ -1930,15 +1954,24 @@ void number_to_text(int n, char* s)
     }
 }
 
-void replace_var(int n, char text[])
+void replace_var(int n, char text[],int zecimale=0)
 {
-    char *p,s[NMAX],aux[NMAX];
+    char *p,*p1,s[NMAX],aux[NMAX];
     number_to_text(n,aux);
     strcpy(s,text);
     p=strchr(s,'%');
     p[0]='\0';
     strcpy(text,s);
     strcat(text,aux);
+    if(zecimale<0) zecimale*=-1;
+    if(zecimale>0)
+    {
+        while(zecimale%10==0) zecimale/=10;
+        strcat(text,".");
+        aux[0]='\0';
+        number_to_text(zecimale,aux);
+        strcat(text,aux);
+    }
     strcat(text,p+1);
 
 }
@@ -1978,18 +2011,10 @@ void afiseaza_erori()
 
 bool verifica_text_cin(char text[]) // cand se introduc caractere prin blocul intrare
 {
-    for(int i=0; i<strlen(text); i++)
-        if(text[i]<'0' || text[i]>'9') return false;
+    if ( text[0]!='-' && text[0]!='+' && ( text[0]<'0' || text[0]>'9') ) return false;
+    for(int i=1; i<strlen(text); i++)
+        if( text[i]<'0' || text[i]>'9') return false;
     return true;
-}
-
-char variabile_iesire(char aux[])
-{
-    //cout<<aux<<'\n';
-    for(int i=0; i<strlen(aux); i++)
-        if(aux[i]>='a' && aux[i]<='z' && (i+1==strlen(aux) || aux[i+1]==',' || aux[i+1]=='=') )
-            return i;
-    return -1;
 }
 
 void sterge_variabile()
@@ -2016,7 +2041,8 @@ void afiseaza_rezultat()
 
     if(Rezultat.size())
     {
-        int bloc=Rezultat[j].bloc,nr=Rezultat[j].nr,rez=Rezultat[j].val;
+        int bloc=Rezultat[j].bloc,nr=Rezultat[j].nr;
+        float rez=Rezultat[j].val;cout<<"AAA"<<rez<<"AAA\n";
         char *p,text1[NMAX];
         strcpy(text1,mesaje_rezultat[nr]);
         if(nr==-1)  // text simplu
@@ -2026,14 +2052,16 @@ void afiseaza_rezultat()
         }
         else
         {
-        if(nr==0)   // text cu variabila
-        {
-            p=strchr(text1,'%');
-            p[0]=Rezultat[j].var;
-        }
-        if(nr==1) replace_var(bloc,text1);  // textul cu rezultat dintr-un anumit bloc
-        replace_var(rez,text1); // rezultatul, atat pentru text cu variabila cat si cu rezultat
-        deseneaza_text(text1,1,text);
+            if(nr==0)   // text cu variabila
+            {
+                p=strchr(text1,'%');
+                p[0]=Rezultat[j].var;
+            }
+            if(nr==1) replace_var(bloc,text1);  // textul cu rezultat dintr-un anumit bloc
+            if((rez-(int)(rez))==0)
+                replace_var(rez,text1);
+            else replace_var(rez,text1,(int)(rez*1000)%1000); // rezultat cu zecimale
+            deseneaza_text(text1,1,text);   // rezultatul, atat pentru text cu variabila cat si cu rezultat
         }
     }
     setcolor(GREEN);
@@ -2047,6 +2075,15 @@ void afiseaza_rezultat()
         text[1]=':';
         text[2]='\0';
         number_to_text(variabile[j],text+2);
+        float rez=variabile[j];
+        if( (rez-(int)(rez)) )
+        {
+            strcat(text,".");
+            int n=(int)(rez*1000)%1000;
+            while(n%10==0) n/=10;
+            if(n<0) n*=-1;
+            number_to_text(n,text+strlen(text));
+        }
         outtextxy(info_x+10+j/13*(info_width/2),info_y+10+info_height+(j%13+1)*20,text);
     }
 
@@ -2084,38 +2121,42 @@ void verifica_erori_desen()
 
 void salvare(int numar=fisier_curent,char numeVechi[]="",int caz=0)
 {
+    refacere_coord();
+    zoom(0,0);
+
     char folder[NMAX] = "salvate/schema";
     int i,cifre;
-    if(caz==0)
+
+    if(caz==0) // nu-i o redenumire, vrem sa salvam o schema noua
     {
-        if(numar!=-1) // salvam in fisierul curent
+        if(numar != -1) // modificam un fisier aflat deja in salvate
         {
-        strcpy(folder+8,fisiere[numar]);
-        i=strlen(folder);
+            strcpy(folder+8,fisiere[numar]);
+            i=strlen(folder);
         }
-   else if(numar == -1) // salvam in fisier nou
-    {
-        numar = nextFileName(cifre);
-        int aux = pow(10,cifre-1);
-
-        for(i=14; cifre != 0; i++,cifre--)
+        else if(numar == -1) // salvam in fisier nou
         {
-            folder[i] = '0' + numar / aux;
-            numar = numar % aux;
-            aux /= 10;
+            numar = nextFileName(cifre); // functia returneaza urmatorul numar din sablon
+            int aux = pow(10,cifre-1);
+            for(i=14; cifre != 0; i++,cifre--)
+            {
+                folder[i] = '0' + numar / aux;
+                numar = numar % aux;
+                aux /= 10;
+            }
+            folder[i] = '.';
+            folder[i+1] = 't';
+            folder[i+2] = 'x';
+            folder[i+3] = 't';
+            folder[i+4] = '\0';
+
+            //cout<<"Numar Lipsa: "<<numar<<endl;
+
+            nr_fisiere++;
+            fisier_curent=nr_fisiere;
+
+            //cout<<nr_fisiere<<' '<<folder<<endl;
         }
-        folder[i] = '.';
-        folder[i+1] = 't';
-        folder[i+2] = 'x';
-        folder[i+3] = 't';
-        folder[i+4] = '\0';
-        cout<<"Numar Lipsa: "<<numar<<endl;
-
-        nr_fisiere++;
-        fisier_curent=nr_fisiere;
-
-        cout<<nr_fisiere<<' '<<folder<<endl;
-    }
 
         FILE* fptr = fopen(folder,"w");
         fwrite(&nr_blocuri,sizeof(int),1,fptr);
@@ -2137,7 +2178,6 @@ void salvare(int numar=fisier_curent,char numeVechi[]="",int caz=0)
             fwrite(&a[i].w1,sizeof(int),1,fptr);
             fwrite(&lenSir,sizeof(int),1,fptr);
             fwrite(&a[i].text,lenSir,1,fptr);
-
             fwrite(&a[i].ok,sizeof(bool),1,fptr);
             fwrite(&a[i].bucla,sizeof(bool),1,fptr);
             fwrite(&a[i].st,sizeof(int),1,fptr);
@@ -2145,10 +2185,10 @@ void salvare(int numar=fisier_curent,char numeVechi[]="",int caz=0)
             fwrite(&lenAnt,sizeof(int),1,fptr);
             list<int>::iterator iter;
             for(iter = a[i].ant.begin(); iter != a[i].ant.end(); iter++)
-                {
-                    int val=*iter;
-                    fwrite(&val,sizeof(int),1,fptr);
-                }
+            {
+                int val=*iter;
+                fwrite(&val,sizeof(int),1,fptr);
+            }
         }
         fclose(fptr);
     }
@@ -2157,42 +2197,45 @@ void salvare(int numar=fisier_curent,char numeVechi[]="",int caz=0)
         char path[100] = "salvate/";
         char aux[100] = "";
 
-        cout<<numeVechi<<" "<<fisiere[numar]<<endl;
+        //cout<<numeVechi<<" "<<fisiere[numar]<<endl;
 
         strcat(path,numeVechi);
         strcat(aux,"salvate/");
         strcat(aux,fisiere[numar]);
-
         rename(path,aux);
 
     }
 
-
+    int semn=1;
+    if(indice_zoom<4) semn=-1;
+    zoom(semn,indice_zoom-4);
+    schimba_coord();
 }
 
 void salvare_setari()
 {
     FILE* fptr=fopen("setari.txt","w");
-        for(int i=0;i<nr_setari;i++)
-            fwrite(&indice_culori[i],sizeof(int),1,fptr);
+    for(int i=0; i<nr_setari; i++)
+        fwrite(&indice_culori[i],sizeof(int),1,fptr);
     fclose(fptr);
 }
 
 void restaurare_setari()
 {
     FILE* fptr=fopen("setari.txt","r");
-        for(int i=0;i<nr_setari;i++)
-            fread(&indice_culori[i],sizeof(int),1,fptr);
-        seteaza_culori();
+    for(int i=0; i<nr_setari; i++)
+        fread(&indice_culori[i],sizeof(int),1,fptr);
+    seteaza_culori();
     fclose(fptr);
 }
 
 void cautaVariabile(int variabileSetate[],int& nrVar,set<int>& vizitate,int nod)
 {
-    if(vizitate.find(nod) == vizitate.end())
+    if(vizitate.find(nod) == vizitate.end()) // daca n am mai vizitat nodul curend/blocul curent
     {
-        vizitate.insert(nod);
-        if(a[nod].tip > 1)
+        vizitate.insert(nod); // il vizitam
+
+        if(a[nod].tip > 1 && !esteSirDeCaractere(a[nod].text)) // blocurile start si stop nu pot contine variabile, dar nici sirurile de caractere
         {
             int len = strlen(a[nod].text);
             for(int i=0; i<len; i++)
@@ -2209,14 +2252,10 @@ void cautaVariabile(int variabileSetate[],int& nrVar,set<int>& vizitate,int nod)
             }
         }
 
-        if(a[nod].st != -1)
-        {
+        if(a[nod].st != -1) // mergem la stanga
             cautaVariabile(variabileSetate,nrVar,vizitate,a[nod].st);
-        }
-        if(a[nod].dr != -1)
-        {
+        if(a[nod].dr != -1) // mergem la dreapta
             cautaVariabile(variabileSetate,nrVar,vizitate,a[nod].dr);
-        }
     }
 }
 
@@ -2226,16 +2265,16 @@ void adauga_variabile(string& cod,int nod)
     set<int> vizitate;
     int nrVar = 0;
 
-    cautaVariabile(variabileSetate,nrVar,vizitate,nod);
+    cautaVariabile(variabileSetate,nrVar,vizitate,nod); // functia principala, care parcurge schema si marcheaza toate variabilele prezente in vectorul de frecventa variabileSetate
 
-    if(nrVar)
+    if(nrVar) // daca avem variabile
     {
         if(limbaj == 1)
             cod += "public ";
         cod += "float ";
     }
+
     for(int i=0; i<26; i++)
-    {
         if(variabileSetate[i])
         {
             cod += 'a' + i;
@@ -2245,10 +2284,7 @@ void adauga_variabile(string& cod,int nod)
             else
                 cod += ";";
         }
-    }
 }
-
-int depth = 0;
 
 void adaugaTabs(string& cod)
 {
@@ -2256,77 +2292,69 @@ void adaugaTabs(string& cod)
         cod += "  ";
 }
 
-
 bool varificaBucla(int nod,int start,set<int>& vizitate)
 {
-    if(vizitate.find(nod) == vizitate.end())
+    if(vizitate.find(nod) == vizitate.end()) // daca nu am mai vizitat blocul curent
     {
-        vizitate.insert(nod);
+        vizitate.insert(nod); // il vizitam
 
-        if(a[nod].bucla)
+        if(a[nod].bucla) // daca intalnesc o bucla inseamna ca nodul de la care am inceput a mers pe un back-edge la un parinte/bunic/strabunic etc, adica se afla intr o bucla, deci nu de aici se incepe bucla
             return false;
 
-        if(a[nod].tip == 1)
-        {
+        if(a[nod].tip == 1) // daca blocul ii stop, atunci ii clar ca toate nodurile aflate pe drumul de la nodul start la nodul stop nu se afla intr o bucla
             return false;
-        }
         else
         {
             bool left = false, right = false;
-            if(a[nod].st != -1)
-            {
+            if(a[nod].st != -1) // merg la stanga
                 left = varificaBucla(a[nod].st,start,vizitate);
-            }
-            if(a[nod].dr != -1)
-            {
+
+            if(a[nod].dr != -1) // merg la dreapta
                 right = varificaBucla(a[nod].dr,start,vizitate);
-            }
             return left || right;
         }
     }
-    else if(nod == start)
+    else if(nod == start) // daca am mai vizitat blocul curent, verific daca de aici am si inceput apelul functiei verificaBucla
     {
         a[nod].bucla++;
         return true;
-
     }
     else
-    {
         return false;
-    }
 }
 
 void adaugaDoWhile(string& cod,int nod)
 {
     set<int> vizitate;
-    if(varificaBucla(nod,nod,vizitate))
-    {
-
-
-        for(int i=1; i<=a[nod].bucla; i++)
+    if(varificaBucla(nod,nod,vizitate)) // verific daca se incepe bucla
+        for(int i=1; i<=a[nod].bucla; i++) // o anumita intructiune poate fi startul a mai multor instructiuni do while
         {
             adaugaTabs(cod);
             depth++;
             cod += "do {\n\n";
         }
-    }
 }
+
 void adaugaCin(string& cod,int nod)
 {
-    adaugaDoWhile(cod,nod);
+    adaugaDoWhile(cod,nod); // ar putea fi inceputul unui dowhile
 
-    int len = strlen(a[nod].text);
+    int len = strlen(a[nod].text),i = 0;
     int variabile[26] = {0};
     queue<char> q;
 
-    for(int i=0; i<len; i++)
+    while(i < len && a[nod].text[i] == ' ')
+        i++;
+
+    for(; i<len; i++)
     {
         char ch = a[nod].text[i];
         if(isalpha(ch))
         {
-            if(variabile[ch-'a'])
+            if(variabile[ch-'a']) // daca am mai vizitat o
             {
-                eroare = 1;
+                eroare = 24;
+                S.push_back({nod-5,24});
             }
             else
             {
@@ -2335,16 +2363,19 @@ void adaugaCin(string& cod,int nod)
             }
             if(i > 1 && isalpha(a[nod].text[i-1]))
             {
-                eroare = 1; // nu pot aparea variabile de lungime mai mare decat 2;
+                eroare = 25; // nu pot aparea variabile de lungime mai mare decat 2;
+                S.push_back({nod-5,25});
             }
         }
         else if(ch == ',' && (i == 0 || a[nod].text[i-1] == ',' || i == len - 1)) // doua virgule una dupa alta, sau virgula la inceput sau sfarsit
         {
-            eroare = 1;
+            eroare = 26;
+            S.push_back({nod-5,26});
         }
-        else
+        else if(ch != ',' && ch != ' ' && !isalpha(ch))
         {
-            eroare = 1;
+            eroare = 27;
+            S.push_back({nod-5,27});
         }
     }
 
@@ -2380,7 +2411,7 @@ void adaugaCin(string& cod,int nod)
     }
 }
 
-bool formaConsecutiva(char s[])
+bool formaConsecutiva(char s[]) // variabila,variabila,....,variabila (sintaxa fixa), folosit pentru a distinge niste cazuri la interpretarea blocului afisare
 {
     int i = 0;
     int n = strlen(s);
@@ -2402,21 +2433,7 @@ bool formaConsecutiva(char s[])
     return true;
 }
 
-bool esteSirDeCaractere(char sir[])
-{
-    int i = 0, j = strlen(sir) - 1, n = strlen(sir);
-    while(i < n-1 && sir[i] == ' ')
-        i++;
-    while(j > 0 && sir[j] == ' ')
-        j--;
-
-    if(j - i == 2 && sir[i] == '\'' && sir[j] == '\'')
-        return true;
-
-    return sir[i] == '"' && sir[j] == '"';
-}
-
-void formatareSir(char sir[],string& nou)
+void formatareSir(char sir[],string& nou) // folosit pentru siruri de caractere ca acestea sa fie bine formatate
 {
     int i = 0, j = strlen(sir) - 1, n = strlen(sir);
     nou = "\"";
@@ -2440,7 +2457,7 @@ void formatareSir(char sir[],string& nou)
 
 void adaugaCout(string& cod,int nod)
 {
-    adaugaDoWhile(cod,nod);
+    adaugaDoWhile(cod,nod); // verific daca de aici se incepe un do while
 
     int len = strlen(a[nod].text);
     int paranteze = 0;
@@ -2453,23 +2470,20 @@ void adaugaCout(string& cod,int nod)
             char ch = a[nod].text[i];
             if((ch == '>' || ch == '<') && !paranteze )
             {
-                eroare = 1;
+                eroare = 28;
+                S.push_back({nod-5,28});
             }
             else if(ch == '(')
-            {
                 paranteze++;
-            }
             else if(ch == ')')
-            {
                 paranteze--;
-            }
         }
 
         if(limbaj == 0)
         {
             cod += "cout<<";
             int i = 0;
-            if(formaConsecutiva(a[nod].text))
+            if(formaConsecutiva(a[nod].text)) //variabila,variabila,....,variabila (sintaxa fixa)
             {
                 while(i < len && a[nod].text[i] == ' ')
                     i++;
@@ -2511,7 +2525,7 @@ void adaugaCout(string& cod,int nod)
             {
                 cod += "System.out.print(";
                 string expresie = "";
-                for(int i=0;i<len;i++)
+                for(int i=0; i<len; i++)
                 {
                     if(a[nod].text[i] != ',')
                     {
@@ -2554,7 +2568,7 @@ void adaugaCout(string& cod,int nod)
 void adaugaBloc(string& cod,int nod)
 {
     set<int> vizitate;
-    if(varificaBucla(nod,nod,vizitate))
+    if(varificaBucla(nod,nod,vizitate)) // verific daca blocul este un while
     {
         adaugaTabs(cod);
         depth++;
@@ -2562,7 +2576,7 @@ void adaugaBloc(string& cod,int nod)
         cod += a[nod].text;
         cod += ") {\n\n";
     }
-    else
+    else // daca nu i while atunci ii un if
     {
         adaugaTabs(cod);
         depth++;
@@ -2574,9 +2588,9 @@ void adaugaBloc(string& cod,int nod)
 
 void adaugaExpresie(string& cod,int nod)
 {
-    adaugaDoWhile(cod,nod);
+    adaugaDoWhile(cod,nod); // verifica daca un bloc calcul este inceputul unui do-while
 
-    if( strlen(a[nod].text) > 0)
+    if( strlen(a[nod].text) > 0) // daca are continut blocul
     {
         adaugaTabs(cod);
         cod += a[nod].text;
@@ -2588,7 +2602,7 @@ void adaugaExpresie(string& cod,int nod)
 
 void genereaza_mesaj(string& cod,set<int>& vizitate,int nod)
 {
-    if(vizitate.find(nod) != vizitate.end())
+    if(vizitate.find(nod) != vizitate.end()) // daca am mai vizitat blocul, atunci am terminat o bucla, ii adaug acolada
     {
         depth--;
         adaugaTabs(cod);
@@ -2596,8 +2610,8 @@ void genereaza_mesaj(string& cod,set<int>& vizitate,int nod)
     }
     else
     {
-        vizitate.insert(nod);
-        if(a[nod].tip == 0)
+        vizitate.insert(nod); // vizitam blocul curent
+        if(a[nod].tip == 0) // daca este un bloc start
         {
             if(limbaj == 0)
                 cod = "#include<iostream>\n\nusing namespace std;\n\n";
@@ -2608,6 +2622,7 @@ void genereaza_mesaj(string& cod,set<int>& vizitate,int nod)
             }
 
             adauga_variabile(cod,nod);
+
             if(limbaj == 0)
             {
                 cod += "\n\nint main() {\n\n";
@@ -2615,22 +2630,21 @@ void genereaza_mesaj(string& cod,set<int>& vizitate,int nod)
             }
             else if(limbaj == 1)
             {
-                cod += "\npublic static void main(String[] args) {\n";
+                cod += "\n\npublic static void main(String[] args) {\n\n";
                 depth++;
                 adaugaTabs(cod);
                 cod += "Scanner reader = new Scanner(System.in);\n";
             }
 
-            if(a[nod].st != -1)
+            if(a[nod].st != -1) // mergem mai departe
                 genereaza_mesaj(cod,vizitate,a[nod].st);
         }
-        else if(a[nod].tip == 1)
+        else if(a[nod].tip == 1) // daca i un bloc stop
         {
-
 
             if(limbaj == 0)
             {
-                if(depth == 1)
+                if(depth == 1) // daca a fost ultimul stop
                 {
                     cod += "return 0;\n\n";
                     depth--;
@@ -2647,7 +2661,7 @@ void genereaza_mesaj(string& cod,set<int>& vizitate,int nod)
             }
             else if(limbaj == 1)
             {
-                if(depth == 2)
+                if(depth == 2) // daca a fost ultimul stop
                 {
                     depth--;
                     adaugaTabs(cod);
@@ -2663,29 +2677,23 @@ void genereaza_mesaj(string& cod,set<int>& vizitate,int nod)
                     cod += "}\n";
                 }
             }
-
         }
-        else if(a[nod].tip == 2)
+        else if(a[nod].tip == 2) // daca i un bloc de citire
         {
             adaugaCin(cod,nod);
-            if(a[nod].st != -1)
-            {
+            if(a[nod].st != -1) // merg mai departe
                 genereaza_mesaj(cod,vizitate,a[nod].st);
-            }
         }
-        else if(a[nod].tip == 3)
+        else if(a[nod].tip == 3) // daca i un bloc de afisare
         {
             adaugaCout(cod,nod);
-            if(a[nod].st != -1)
-            {
+            if(a[nod].st != -1) // merg mai departe
                 genereaza_mesaj(cod,vizitate,a[nod].st);
-            }
         }
-        else if(a[nod].tip == 4)
+        else if(a[nod].tip == 4) // daca i un bloc decizie
         {
-            if(a[nod].st != -1 && a[a[nod].st].bucla && a[a[nod].st].tip != 4)
+            if(a[nod].st != -1 && a[a[nod].st].bucla && a[a[nod].st].tip != 4) // daca blocul de decizie curent
             {
-
                 depth--;
                 adaugaTabs(cod);
                 cod += "}while(";
@@ -2694,26 +2702,19 @@ void genereaza_mesaj(string& cod,set<int>& vizitate,int nod)
             }
             else
             {
-                adaugaBloc(cod,nod);
-                if(a[nod].st != -1)
-                {
+                adaugaBloc(cod,nod); // adaug blocul decizie
+                if(a[nod].st != -1) // merg mai departe
                     genereaza_mesaj(cod,vizitate,a[nod].st);
-                }
             }
 
-
-            if(a[nod].dr != -1)
-            {
+            if(a[nod].dr != -1) // pot merge si la dreapta
                 genereaza_mesaj(cod,vizitate,a[nod].dr);
-            }
         }
-        else
+        else // daca i bloc calcul
         {
             adaugaExpresie(cod,nod);
             if(a[nod].st != -1)
-            {
                 genereaza_mesaj(cod,vizitate,a[nod].st);
-            }
         }
     }
 }
@@ -2724,7 +2725,8 @@ bool apartine_stiva(int i, stack<int> S)
     bool ok=0;
     while(!S.empty())
     {
-        int x=S.top(); S.pop();
+        int x=S.top();
+        S.pop();
         if(x==i) ok=1;
         aux.push(x);
     }
@@ -2738,114 +2740,130 @@ bool apartine_stiva(int i, stack<int> S)
 
 void executa()
 {
-    for(int i=0;i<26;i++) variabile[i]=0;
+    for(int i=0; i<26; i++) variabile[i]=0;
+    //cout<<"AAA"<<evalueazaExpresie("5/2")<<"AAA";
     sterge_info();
     eroare=rezult=0;
+    S.clear();
+    Rezultat.clear();
+
     verifica_erori_desen();
-    int i=start_main,rez;
+    int i=start_main;
+    float rez;
     stack<int>rad;
 
-    cout<<"TIPUL: "<<a[i].tip<<endl;
-        while(a[i].tip!=1 && !eroare)
-        {
-            if(ismouseclick(WM_LBUTTONDOWN))
-                {
-                    clearmouseclick(WM_LBUTTONDOWN);
-                    eroare=0;rezult=0;
-                    return ;
-                }
-            eroare=0;
-            int i1=i;
-            if(a[i1].ok)
-                marcheaza_bloc(i1);
-            delay(viteza);
-            if(strcmp(a[i].text,"")==0)
-            {
-                S.push_back({i-5,4});   // bloc fara expresie
-                eroare=-1;
-            }
-            else if(a[i].tip == 3 && esteSirDeCaractere(a[i].text))
-            {
-                Rezultat.push_back({i-5,-1,0}); // afisare text simplu
-                if(a[i].st!=-1)
-                    i=a[i].st;
-                else eroare=1;
-                if(a[i].tip==1 && !rad.empty())
-                    {
-                        i=a[rad.top()].dr;
-                        rad.pop();
-                    }
-                if(a[i1].ok)
-                    marcheaza_bloc(i1,color);
-                continue ;
+    string cod;
+    set<int> vizitate;
+    for(int i=6; i<nr_blocuri; i++)
+        a[i].bucla = false;
+    genereaza_mesaj(cod,vizitate,start_main);
 
-            }
-            else if(a[i].tip>1)
-                rez=evalueazaExpresie(a[i].text);
-            if(!eroare)
+    cout<<"TIPUL: "<<a[i].tip<<endl;
+
+    while(a[i].tip!=1 && !eroare)
+    {
+        if(ismouseclick(WM_LBUTTONDOWN))
+        {
+            clearmouseclick(WM_LBUTTONDOWN);
+            eroare=0;
+            rezult=0;
+            S.clear();
+            Rezultat.clear();
+            return ;
+        }
+        eroare=0;
+        int i1=i;
+        if(a[i1].ok)
+            marcheaza_bloc(i1);
+        delay(viteza);
+        if(strcmp(a[i].text,"")==0)
+        {
+            S.push_back({i-5,4});   // bloc fara expresie
+            eroare=-1;
+        }
+        else if(a[i].tip == 3 && esteSirDeCaractere(a[i].text))
+        {
+            Rezultat.push_back({i-5,-1,0}); // afisare text simplu
+            if(a[i].st!=-1)
+                i=a[i].st;
+            else eroare=1;
+            if(a[i].tip==1 && !rad.empty())
             {
-                if(a[i].tip==3 || a[i].tip==2)
-                {
-                    char aux[NMAX];
-                    int nr=0;
-                    for(int j=0; j<=strlen(a[i].text); j++)     // eliminam spatiile
-                        if(a[i].text[j]!=' ') aux[nr++]=a[i].text[j];
-                    aux[nr]='\0';
-                    int poz=variabile_iesire(aux);
-                    if(poz==-1 && a[i].tip==3) Rezultat.push_back({i-5,1,rez}); // daca avem o variabila simpla de afisat
-                    nr=0;
-                    while(poz!=-1)  // cautam mai multe variabile
-                    {
-                        nr+=poz+1;
-                        if(a[i].tip==3)
-                            Rezultat.push_back({i-5,0,variabile[aux[nr-1]-'a'],aux[nr-1]});
-                        else
-                        {
-                            deseneaza_text("",3,"Introduceti o valoare");
-                            strcpy(a[NMAX-9].text,"");
-                            citeste_text(NMAX-9);
-                            clearmouseclick(WM_LBUTTONDOWN);
-                            sterge_info();
-                            if(verifica_text_cin(a[NMAX-9].text))
-                                text_to_number(variabile[aux[nr-1]-'a'],a[NMAX-9].text);
-                            else eroare=1,S.push_back({0,2});
-                        }
-                        poz=variabile_iesire(aux+nr);
-                    }
-                }
-                if(a[i].st!=-1)
-                    {
-                        if(a[i].tip==4)
-                        {
-                            if(rez)
-                            {
-                                if(!apartine_stiva(i,rad))  // pentru a reveni pe ramura din dreapta in decizie
-                                    rad.push(i);
-                                i=a[i].st;
-                            }
-                        else
-                        {
-                            if(a[i].dr!=-1)
-                                {
-                                    if(!rez)
-                                        i=a[i].dr;
-                                }
-                            else eroare=1;
-                        }
-                        }
-                        else i=a[i].st;
-                        if(a[i].tip==1 && !rad.empty())
-                                    {
-                                        i=a[rad.top()].dr;
-                                        rad.pop();
-                                    }
-                    }
-                else eroare=1;
+                i=a[rad.top()].dr;
+                rad.pop();
             }
-            else if(eroare!=-1)  S.push_back({i-5,eroare});
             if(a[i1].ok)
                 marcheaza_bloc(i1,color);
+            continue ;
+
         }
+        else if(a[i].tip>1)
+            rez=evalueazaExpresie(a[i].text);
+        if(!eroare)
+        {
+            if(a[i].tip==3 || a[i].tip==2)
+            {
+                char aux[NMAX];
+                int nr=0;
+                for(int j=0; j<=strlen(a[i].text); j++)     // eliminam spatiile
+                    if(a[i].text[j]!=' ') aux[nr++]=a[i].text[j];
+                aux[nr]='\0';
+                char *p=strtok(aux,",");
+                while(p)
+                {
+                    if(a[i].tip==3)  // expresii de iesire permise : a   7*a    a*7   a,b,c     a,7*b,c    8*a,b,c      a=b=c=2,7*a,d
+                    {
+                        if(p[0]>='a' && p[0]<='z' && (strlen(p)==1 || (p[1]=='=' && p[2]!='=')) )
+                            Rezultat.push_back({i-5,0,variabile[p[0]-'a'],p[0]});
+                        else Rezultat.push_back({i-5,1,evalueazaExpresie(p)});
+                    }
+                    else    // luam variabilele de intrare
+                    {
+                        deseneaza_text("",3,"Introduceti o valoare");
+                        strcpy(a[NMAX-9].text,"");
+                        citeste_text(NMAX-9);
+                        clearmouseclick(WM_LBUTTONDOWN);
+                        sterge_info();
+                        if(verifica_text_cin(a[NMAX-9].text))   // se introduc doar valori
+                            text_to_number(variabile[p[0]-'a'],a[NMAX-9].text);
+                        else eroare=1,S.push_back({0,2});
+                    }
+                    p=strtok(NULL,",");
+                }
+            }
+            if(a[i].st!=-1)
+            {
+                if(a[i].tip==4)
+                {
+                    if(rez)
+                    {
+                        if(!a[i].bucla && !apartine_stiva(i,rad))  // pentru a reveni pe ramura din dreapta in decizie
+                            rad.push(i);
+                        i=a[i].st;
+                    }
+                    else
+                    {
+                        if(a[i].dr!=-1)
+                        {
+                           // if(!rez)
+                                i=a[i].dr;
+                        }
+                        else eroare=1;
+                    }
+                }
+                else i=a[i].st;
+                if(a[i].tip==1 && !rad.empty())
+                {
+                    i=a[rad.top()].dr;
+                    rad.pop();
+                }
+            }
+            else eroare=1;
+        }
+        else if(eroare!=-1)  S.push_back({i-5,eroare});
+        if(a[i1].ok)
+            marcheaza_bloc(i1,color);
+    }
 
 
     if(a[i].tip==1 && a[i].ok)
@@ -2858,22 +2876,15 @@ void executa()
     if(S.empty()) rezult=1,event=0,executat=1;
     else eroare=1,event=0;
     //cout<<eroare<<' ';
-    string cod;
-    set<int> vizitate;
 
-    for(int i=6; i<nr_blocuri; i++)
-        a[i].bucla = false;
-
-    genereaza_mesaj(cod,vizitate,start_main);
+    //genereaza_mesaj(cod,vizitate,start_main);
     if(rezult==1) eroare=0;
     //cout<<"Q"<<eroare<<' '<<rezult<<"Q\n";
-   // cout<<'\n'<<'\n'<<cod;
+    // cout<<'\n'<<'\n'<<cod;
 
     strcpy(codCorect, cod.c_str());
     cout<<cod<<endl;
 }
-
-
 
 void Undo(int Redo=0)
 {
@@ -2898,10 +2909,10 @@ void Undo(int Redo=0)
         {
             sterge_legatura(undo[j].bloc1,undo[j].bloc2,undo[j].dreapta);
             if(undo[j].leg)
-                {
-                 if(undo[j].leg<0) adauga_legatura(undo[j].bloc1,-undo[j].leg,1);
-                 else adauga_legatura(undo[j].bloc1,undo[j].leg,0);
-                }
+            {
+                if(undo[j].leg<0) adauga_legatura(undo[j].bloc1,-undo[j].leg,1);
+                else adauga_legatura(undo[j].bloc1,undo[j].leg,0);
+            }
             break;
         }
         case 3:
@@ -2917,10 +2928,10 @@ void Undo(int Redo=0)
         case 5:
         {
             if(undo[j].leg)
-                {
-                 if(undo[j].leg<0) sterge_legatura(undo[j].bloc1,-undo[j].leg,1);
-                 else sterge_legatura(undo[j].bloc1,undo[j].leg,0);
-                }
+            {
+                if(undo[j].leg<0) sterge_legatura(undo[j].bloc1,-undo[j].leg,1);
+                else sterge_legatura(undo[j].bloc1,undo[j].leg,0);
+            }
             adauga_legatura(undo[j].bloc1,undo[j].bloc2,undo[j].dreapta);
             break;
         }
@@ -2949,6 +2960,7 @@ void redo()
 void afiseaza_text_ajutor()
 {
     int i=NMAX-1;
+    int r=raza,z=indice_zoom,e_x=ecran_x,e_y=ecran_y;
     continuare=0;
     init();
     a[i]= {4,1,600,300,"a=(i+"};
@@ -2984,6 +2996,8 @@ void afiseaza_text_ajutor()
     outtextxy(cod_x,cod_y-30,"scheme executate cu succes");
     settextstyle(3,0,0);
     setusercharsize(25,100,25,100);
+    raza=r;indice_zoom=z;
+    ecran_x=e_x;ecran_y=e_y;
 }
 
 void help()
@@ -3119,15 +3133,15 @@ void click_stanga() /// click stanga pentru a plasa blocuri si pentru a adauga b
                 }
                 else
                 {
-                adauga_undo();
-                undo.push_back({1,nr_blocuri});
-                start_main=nr_blocuri;
-                a[nr_blocuri]= {bloc_nou,1,x,y};
-                a[nr_blocuri].x1=x1;
-                a[nr_blocuri++].y1=y1;
+                    adauga_undo();
+                    undo.push_back({1,nr_blocuri});
+                    start_main=nr_blocuri;
+                    a[nr_blocuri]= {bloc_nou,1,x,y};
+                    a[nr_blocuri].x1=x1;
+                    a[nr_blocuri++].y1=y1;
                 }
             }
-            else if(bloc_nou<=5)    // adaugam blocuri noi
+            else if(bloc_nou<=5 && nr_blocuri<NMAX-10)    // adaugam blocuri noi
             {
                 adauga_undo();
                 undo.push_back({1,nr_blocuri});
@@ -3158,10 +3172,10 @@ void click_stanga() /// click stanga pentru a plasa blocuri si pentru a adauga b
                 adauga_undo();
                 undo.push_back({2,nod_st,nod_dest});
                 if(a[nod_st].st!=-1) // daca avem deja o legatura, o adaugam la undo pentru a o putea restaura
-                    {
-                     a[a[nod_st].st].ant.remove(nod_st);
-                     undo.back().leg=a[nod_st].st;
-                    }
+                {
+                    a[a[nod_st].st].ant.remove(nod_st);
+                    undo.back().leg=a[nod_st].st;
+                }
                 a[nod_st].st=nod_dest;
                 a[nod_dest].ant.push_back(nod_st);
                 nod_st=nod_dr=nod_dest=-1;
@@ -3171,10 +3185,10 @@ void click_stanga() /// click stanga pentru a plasa blocuri si pentru a adauga b
                 adauga_undo();
                 undo.push_back({2,nod_dr,nod_dest,0,0,0,0,1});
                 if(a[nod_dr].dr!=-1)
-                    {
-                     a[a[nod_dr].dr].ant.remove(nod_dr);
-                     undo.back().leg=-a[nod_st].dr;
-                    }
+                {
+                    a[a[nod_dr].dr].ant.remove(nod_dr);
+                    undo.back().leg=-a[nod_st].dr;
+                }
                 a[nod_dr].dr=nod_dest;
                 a[nod_dest].ant.push_back(nod_dr);
                 a[nod_dest].ant.unique();
@@ -3295,23 +3309,33 @@ void init_setari()
 
 
 }
-
 bool verifica_schimbari_setari(int x, int y)
 {
     if( (x>=set_nod_x-35 && x<=set_nod_x-25) || (x>=set_nod_x+25 && x<=set_nod_x+35) )
-        {for(int i=0; i<nr_setari; i++)
+        {
+            for(int i=0; i<nr_setari; i++)
             if(y>=(100+i*100) && y<=(120+i*100) )
             {
-
+                if(i==6)
+                {
+                     if(x>set_nod_x)
+                     {
+                         if(indice_culori[i]<nr_limbaje-1) indice_culori[i]++,executat=0;
+                     }
+                     else if(indice_culori[i]>0) indice_culori[i]--,executat=0;
+                }
+                else
+                {
                 if(x>set_nod_x) indice_culori[i]=min(indice_culori[i]+1,nr_culori);
                 else indice_culori[i]=max(indice_culori[i]-1,0);
-                if(i==6) indice_culori[i]=min(indice_culori[i],nr_limbaje-1);
+                }
                 return true ;
             }
         }
 
     return false;
 }
+
 
 void click_stanga_setari()
 {
@@ -3516,13 +3540,12 @@ void deschideFisier(int nr)
         fread(&lenSir,sizeof(int),1,fptr);
         fread(&a[i].text,lenSir,1,fptr);
         a[i].text[lenSir] = '\0';
-
         fread(&a[i].ok,sizeof(bool),1,fptr);
         fread(&a[i].bucla,sizeof(bool),1,fptr);
         fread(&a[i].st,sizeof(int),1,fptr);
         fread(&a[i].dr,sizeof(int),1,fptr);
         fread(&lenAnt,sizeof(int),1,fptr);
-        //list<int>::iterator iter;
+
         for(int j=1; j<=lenAnt; j++)
         {
             int val;
@@ -3532,6 +3555,11 @@ void deschideFisier(int nr)
     }
 
     fclose(fptr);
+    ecran_x=ecran_y=0;
+    schimba_coord();
+    indice_zoom=4;
+    raza=7;
+
 }
 
 void redeseneaza(int curEcranY)
@@ -3574,6 +3602,7 @@ void Deschide(int i)
     cleardevice();
     setbkcolor(BLACK);
     clearviewport();
+
     for(int i=0; i<7; i++)
         ecrane[i] = 0;
 
@@ -3587,13 +3616,14 @@ void Deschide(int i)
 
 void Sterge(int bloc)
 {
-    char fisierStergere[100] = "";
+    char fisierStergere[NMAX] = "";
     strcat(fisierStergere,"salvate/");
     strcat(fisierStergere,fisiere[bloc]);
     remove(fisierStergere);
     for(int i=bloc; i<nr_fisiere; i++)
         strcpy(fisiere[i],fisiere[i+1]);
     nr_fisiere--;
+    fisier_curent=-1;
 }
 
 void Redenumeste(int bloc, int curEcranY)
@@ -3658,7 +3688,7 @@ int click_stanga_salvate(int curBloc,int nr_fisiere)
     {
         if(xs <= x && x <= xs + 200 && ys <= y && y <= ys+100)
             return i;
-         ys += 150;
+        ys += 150;
     }
     return -1;
 
@@ -3690,12 +3720,10 @@ void ecran2()
     listFile(fisiere,nr_fisiere);
     nr_butoane = 1;
 
-
     int curEcranY = 100;
     int curBloc = 0;
     int bloc=-1;
     bool event=1,ok=0;
-
 
     while(!ecran_schimbat)
     {
@@ -3724,7 +3752,7 @@ void ecran2()
                 if(curBloc > 0)
                 {
                     curEcranY += 150;
-                    event=1;//redeseneaza(curEcranY,nr_fisiere,fisiere);
+                    event=1;  //redeseneaza(curEcranY,nr_fisiere,fisiere);
                     curBloc--;
                 }
 
@@ -3774,9 +3802,7 @@ void scrieInFisier(char s[][NMAX],int n)
 {
     FILE* ptr = fopen("cod.txt", "w");
     for(int i=0; i<=n; i++)
-    {
         fprintf(ptr, "%s", s[i]);
-    }
     fclose(ptr);
 }
 
@@ -3785,7 +3811,7 @@ void ecran3()
 {
     cleardevice();
     setbkcolor(fundal);
-    char codCaracter;
+    char codCaracter,pred = -1;
     nr_butoane = -1;
 
     afisareCursor();
@@ -3812,7 +3838,7 @@ void ecran3()
                 else if(strcmp(obiect->eticheta,"start") != 0)
                     schemaGresita = 1;
 
-                FILE *fd=fopen("output.txt","wt+");
+                FILE *fd=fopen("output.txt","r+");
 
                 if(!schemaGresita)
                 {
@@ -3846,9 +3872,6 @@ void ecran3()
             int nrElemente = strlen(cod[linieCaracter]);
             codCaracter = getch();
 
-            //indexCaracter
-            //linieCaracter
-            //linieCod
             cout<<int(codCaracter)<<" "<<indexCaracter<<" "<<" "<<linieCaracter<<" "<<nrElemente<<" LINIE COD: "<<linieCod<<endl;
 
             if(codCaracter == 8) // backspace
@@ -3856,7 +3879,7 @@ void ecran3()
 
                 if(indexCaracter != 0)
                 {
-                    for(int i=indexCaracter-1;i<nrElemente;i++)
+                    for(int i=indexCaracter-1; i<nrElemente; i++)
                         cod[linieCaracter][i] = cod[linieCaracter][i+1];
 
                     indexCaracter--;
@@ -3869,7 +3892,7 @@ void ecran3()
                     {
                         indexCaracter = strlen(cod[linieCaracter]);
                         strcat(cod[linieCaracter],cod[linieCaracter+1]);
-                        for(int i = linieCaracter+1;i<=linieCod;i++)
+                        for(int i = linieCaracter+1; i<=linieCod; i++)
                             strcpy(cod[i],cod[i+1]);
 
                         linieCod = linieCod-1;
@@ -3883,14 +3906,12 @@ void ecran3()
                 }
 
             }
-            else if(codCaracter == 13)
+            else if(codCaracter == 13) // enter
             {
 
-
                 linieCaracter++;
-                for(int i=linieCod+1;i>=linieCaracter;i--)
+                for(int i=linieCod+1; i>=linieCaracter; i--)
                     strcpy(cod[i],cod[i-1]);
-                cout<<"CRESCUT\n";
                 linieCod = max(linieCod,linieCaracter);
 
                 char aux[100] = {'\0'};
@@ -3902,15 +3923,15 @@ void ecran3()
                 linieCod++;
 
             }
-            else if(codCaracter == 75)
+            else if(codCaracter == 75 && pred == 0)
             {
                 indexCaracter = max(0,indexCaracter-1);
             }
-            else if(codCaracter == 77)
+            else if(codCaracter == 77 && pred == 0)
             {
                 indexCaracter = min(nrElemente,indexCaracter+1);
             }
-            else if(codCaracter == 72)
+            else if(codCaracter == 72 && pred == 0)
             {
                 linieCaracter--;
                 if(linieCaracter != -1)
@@ -3923,10 +3944,9 @@ void ecran3()
                     linieCaracter = 0;
                 }
             }
-            else if(codCaracter == 80)
+            else if(codCaracter == 80 && pred == 0)
             {
                 linieCaracter++;
-                cout<<"Crescut\n";
                 if(linieCaracter > linieCod)
                 {
                     linieCaracter = linieCod;
@@ -3942,13 +3962,14 @@ void ecran3()
 
                 cod[linieCaracter][nrElemente+1] = '\0';
 
-                for(int i = nrElemente;i > indexCaracter;i--)
+                for(int i = nrElemente; i > indexCaracter; i--)
                 {
                     cod[linieCaracter][i] = cod[linieCaracter][i-1];
                 }
                 cod[linieCaracter][indexCaracter] = codCaracter;
                 indexCaracter++;
             }
+            pred = codCaracter;
             afisareCursor();
         }
     }
@@ -3959,11 +3980,7 @@ void ecran4()
 {
     init_setari();
     while(!ecran_schimbat)
-    {
         if(ismouseclick(WM_LBUTTONDOWN))  click_stanga_setari();
-
-    }
-
 }
 void ecran5()
 {
@@ -4014,10 +4031,10 @@ int main()
                 else if(ecrane[4])
                     ecran4();
                 else if(ecrane[5])
-                    {
-                        salvare_setari();
-                        exit(1);
-                    }
+                {
+                    salvare_setari();
+                    exit(1);
+                }
             }
             else
             {
@@ -4042,10 +4059,10 @@ int main()
                 else if(ecrane[5])
                     ecran4();
                 else if(ecrane[6])
-                    {
-                        salvare_setari();
-                        exit(1);
-                    }
+                {
+                    salvare_setari();
+                    exit(1);
+                }
             }
         }
 
@@ -4059,4 +4076,5 @@ int main()
 
     return 0;
 }
+
 
