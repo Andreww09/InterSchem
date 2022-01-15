@@ -1177,7 +1177,7 @@ void citeste_text(int i)
     char c,s[NMAX];
     int n;
     strcpy(s,a[i].text);
-    n=strlen(s);//cout<<n;
+    n=strlen(s);
     while(c!=13)
     {
         c=getch();
@@ -2150,12 +2150,9 @@ void salvare(int numar=fisier_curent,char numeVechi[]="",int caz=0)
             folder[i+3] = 't';
             folder[i+4] = '\0';
 
-            //cout<<"Numar Lipsa: "<<numar<<endl;
-
             nr_fisiere++;
             fisier_curent=nr_fisiere;
 
-            //cout<<nr_fisiere<<' '<<folder<<endl;
         }
 
         FILE* fptr = fopen(folder,"w");
@@ -2197,7 +2194,6 @@ void salvare(int numar=fisier_curent,char numeVechi[]="",int caz=0)
         char path[100] = "salvate/";
         char aux[100] = "";
 
-        //cout<<numeVechi<<" "<<fisiere[numar]<<endl;
 
         strcat(path,numeVechi);
         strcat(aux,"salvate/");
@@ -2741,7 +2737,6 @@ bool apartine_stiva(int i, stack<int> S)
 void executa()
 {
     for(int i=0; i<26; i++) variabile[i]=0;
-    //cout<<"AAA"<<evalueazaExpresie("5/2")<<"AAA";
     sterge_info();
     eroare=rezult=0;
     S.clear();
@@ -2757,8 +2752,6 @@ void executa()
     for(int i=6; i<nr_blocuri; i++)
         a[i].bucla = false;
     genereaza_mesaj(cod,vizitate,start_main);
-
-    cout<<"TIPUL: "<<a[i].tip<<endl;
 
     while(a[i].tip!=1 && !eroare)
     {
@@ -2875,24 +2868,20 @@ void executa()
 
     if(S.empty()) rezult=1,event=0,executat=1;
     else eroare=1,event=0;
-    //cout<<eroare<<' ';
 
     //genereaza_mesaj(cod,vizitate,start_main);
     if(rezult==1) eroare=0;
-    //cout<<"Q"<<eroare<<' '<<rezult<<"Q\n";
-    // cout<<'\n'<<'\n'<<cod;
 
     strcpy(codCorect, cod.c_str());
-    cout<<cod<<endl;
 }
 
 void Undo(int Redo=0)
 {
-    int j=indice_undo-1;//cout<<j<<' ';
+    int j=indice_undo-1;
     if(j+1)
     {
         int tip=undo[j].tip;
-        if(Redo) tip=7-tip; // se face simetricul cazului daca e redo
+        if(Redo) tip=7-tip;
         switch (tip)
         {
         case 0:
@@ -3164,7 +3153,6 @@ void click_stanga() /// click stanga pentru a plasa blocuri si pentru a adauga b
     verifica_butoane(x,y);
     if(verifica_toate_nodurile(x,y))
     {
-        //cout<<nod_dest<<' '<<nod_st<<' '<<nod_dr<<'\n';
         if(nod_dest!=-1 && (nod_st!=-1 || nod_dr!=-1))
         {
             if(nod_st!=-1)
@@ -3669,7 +3657,7 @@ bool verifica_optiuni_salvate(int x, int y, int bloc, int curEcranY)
 {
     int a=mousex(),b=mousey();
     clearmouseclick(WM_LBUTTONDOWN);
-    int nr=(b-y)/option_height;//cout<<nr<<' ';
+    int nr=(b-y)/option_height;
     if(a<x || a>x+option_width || b<y || b>y+3*option_height) return false ;
     if(nr==0) Deschide(bloc);
     if(nr==1) Sterge(bloc);
@@ -3862,8 +3850,6 @@ void ecran3()
 
                 fclose(fd);
 
-                cout<<"Schema este "<<schemaGresita<<endl;
-
             }
         }
 
@@ -3872,7 +3858,6 @@ void ecran3()
             int nrElemente = strlen(cod[linieCaracter]);
             codCaracter = getch();
 
-            cout<<int(codCaracter)<<" "<<indexCaracter<<" "<<" "<<linieCaracter<<" "<<nrElemente<<" LINIE COD: "<<linieCod<<endl;
 
             if(codCaracter == 8) // backspace
             {
@@ -4018,9 +4003,7 @@ int main()
                 ecran0();
             else if(!continuare)
             {
-                /* for(int i=0;i<6;i++)
-                     cout<<ecrane[i]<<" ";
-                 cout<<endl;*/
+
 
                 if(ecrane[1])
                     ecran1();
@@ -4038,9 +4021,7 @@ int main()
             }
             else
             {
-                /* for(int i=0;i<=6;i++)
-                     cout<<ecrane[i]<<" ";
-                 cout<<endl;*/
+
 
                 if(ecrane[1]) // butonul continuare
                 {
@@ -4076,5 +4057,4 @@ int main()
 
     return 0;
 }
-
 
